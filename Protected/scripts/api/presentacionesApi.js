@@ -1,15 +1,16 @@
 // presentacionesApi.js
 // Módulo API para comunicación con /api/presentaciones
 //
-// ┌──────────────────┬──────────┬──────────────────────────────────────────────┐
-// │ Método           │ HTTP     │ Endpoint                                     │
-// ├──────────────────┼──────────┼──────────────────────────────────────────────┤
-// │ getAll()         │ GET      │ /api/presentaciones/get_all                  │
-// │ getById(id)      │ GET      │ /api/presentaciones/por_id/:presentacion_id  │
-// │ insert(data)     │ POST     │ /api/presentaciones/insert                   │
-// │ update(data)     │ POST     │ /api/presentaciones/update                   │
-// │ setState(data)   │ POST     │ /api/presentaciones/set_state                │
-// └──────────────────┴──────────┴──────────────────────────────────────────────┘
+// ┌──────────────────────┬──────────┬─────────────────────────────────────────┐
+// │ Método               │ HTTP     │ Endpoint                                │
+// ├──────────────────────┼──────────┼─────────────────────────────────────────┤
+// │ getAll()             │ GET      │ /api/presentaciones/get_all             │
+// │ getById(id)          │ GET      │ /api/presentaciones/por_id/:id          │
+// │ getByNombre(nombre)  │ GET      │ /api/presentaciones/por_nombre/:nombre  │
+// │ insert(data)         │ POST     │ /api/presentaciones/insert              │
+// │ update(data)         │ POST     │ /api/presentaciones/update              │
+// │ setState(data)       │ POST     │ /api/presentaciones/set_state           │
+// └──────────────────────┴──────────┴─────────────────────────────────────────┘
 
 const BASE = '/api/presentaciones';
 const NO_SERVER = 'No hay conexión con el servidor';
@@ -23,13 +24,13 @@ async function request(url, options = {}) {
   try { json = await res.json(); }
   catch (parseErr) { console.error(`[presentacionesApi] Respuesta no-JSON en ${url} (status ${res.status}):`, parseErr); throw new Error(NO_SERVER); }
 
-  if (!res.ok) { const msg = json.message || `Error HTTP ${res.status}`; console.warn(`[presentacionesApi] ${url}:`, msg); throw new Error(msg); }
+  if (!res.ok) { const msg = json.message || `Error HTTP ${res.status}`; throw new Error(msg); }
+  if (json.success === false) { throw new Error(json.message || 'Error en la operación'); }
   return json;
 }
 
-const presentacionesApi = {
-
-  // SP: presentaciones_get_all → [{ presentacion_id, nombre }]
+export const presentacionesApi = {
+  // SP: presentaciones_get_all() → [{ presentacion_id, nombre, estado }]
   async getAll() {
     console.log('[presentacionesApi.getAll] Solicitando todas las presentaciones...');
     const json = await request(`${BASE}/get_all`);
@@ -37,11 +38,20 @@ const presentacionesApi = {
     return json;
   },
 
-  // SP: presentaciones_get_by_id → { presentacion_id, nombre }
+  // SP: presentaciones_get_by_id(@presentacion_id) → { presentacion_id, nombre, estado }
   async getById(presentacionId) {
-    console.log(`[presentacionesApi.getById] Buscando presentación con id: ${presentacionId}`);
+    console.log(`[presentacionesApi.getById] Solicitando ID: ${presentacionId}`);
     const json = await request(`${BASE}/por_id/${presentacionId}`);
     console.log('[presentacionesApi.getById] Datos recibidos:', json);
+    return json;
+  },
+
+  // SP: presentaciones_get_by_name(@nombre) → [{ presentacion_id, nombre, estado }]
+  async getByNombre(nombre) {
+    const url = `${BASE}/por_nombre/${encodeURIComponent(nombre)}`;
+    console.log(`[presentacionesApi.getByNombre] Solicitando nombre: ${nombre}`);
+    const json = await request(url);
+    console.log('[presentacionesApi.getByNombre] Datos recibidos:', json);
     return json;
   },
 
@@ -72,5 +82,3 @@ const presentacionesApi = {
     return json;
   }
 };
-
-export { presentacionesApi };

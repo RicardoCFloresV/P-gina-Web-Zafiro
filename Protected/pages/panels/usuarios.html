@@ -107,17 +107,34 @@
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:ml-[260px]">
+            <!-- Topbar -->
       <header class="h-[70px] bg-card flex items-center justify-between px-4 sm:px-8 shadow-sm sticky top-0 z-[900]">
-        <button id="menu-toggle" class="lg:hidden text-primary text-2xl p-2 focus:outline-none"><i class="fa-solid fa-bars"></i></button>
+        <button id="menu-toggle" class="lg:hidden text-primary text-2xl p-2 focus:outline-none">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        
+        <!-- User Interface -->
         <div class="hidden sm:flex items-center gap-6 ml-auto">
           <div class="flex items-center gap-4">
-            <a href="#" class="text-primary font-semibold flex items-center gap-2 hover:text-accent transition-colors"><i class="fa-solid fa-home"></i> Inicio</a>
-            <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover shadow-sm">
-            <div class="flex flex-col"><span class="font-bold text-sm leading-tight text-textMain">Admin Zafiro</span><span class="text-xs text-textMuted">Super Administrador</span></div>
+            <a href="/Protected/pages/admin.html" class="text-primary font-semibold flex items-center gap-2 hover:text-accent transition-colors"><i class="fa-solid fa-home"></i> Inicio</a>
+            
+            <img id="header-avatar" src="https://ui-avatars.com/api/?name=Usuario&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover shadow-sm">
+            
+            <div class="flex flex-col">
+              <span id="header-username" class="font-bold text-sm leading-tight text-textMain">Cargando...</span>
+              <span id="header-role" class="text-xs text-textMuted">Cargando...</span>
+            </div>
           </div>
-          <button id="logout-btn" class="bg-danger text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-red-800 transition-colors flex items-center gap-2"><i class="fa-solid fa-sign-out-alt"></i> Salir</button>
+
+          <button id="logout-btn" class="bg-danger text-white px-4 py-2 rounded-md ...">
+            <i class="fa-solid fa-sign-out-alt"></i> Salir
+          </button>
         </div>
-        <button class="sm:hidden bg-danger text-white px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-red-800 transition-colors ml-auto"><i class="fa-solid fa-sign-out-alt"></i></button>
+        
+        <!-- Botón de salir para móvil ultra pequeño -->
+        <button class="sm:hidden bg-danger text-white px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-red-800 transition-colors ml-auto">
+          <i class="fa-solid fa-sign-out-alt"></i>
+        </button>
       </header>
 
       <main class="p-4 sm:p-8 flex-1">
@@ -329,5 +346,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
   <script type="module" src="/Protected/scripts/control/usuariosDashboard.js"></script>
+  <script src="/Protected/scripts/sessionManager.js"></script>
+
 </body>
 </html>

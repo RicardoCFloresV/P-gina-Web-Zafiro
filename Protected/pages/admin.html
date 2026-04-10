@@ -5,213 +5,213 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Zafiro Home - Dashboard Administrador</title>
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
-  <!-- Enlace al archivo CSS del Canvas -->
-  <link rel="stylesheet" href="/Protected/css/index.css" />
-
-  <style>
-    /* Estilos específicos para las tarjetas del menú principal */
-    .modules-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1.5rem;
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'rgb(45, 71, 120)', 'primary-dark': 'rgb(30, 48, 82)',
+            secondary: 'rgb(100, 140, 188)', accent: '#f08a5d', 'accent-dark': '#d87245',
+            danger: '#a5230c', success: '#16a34a',
+            bg: '#f6f7fb', card: '#ffffff', textMain: '#333333', textMuted: '#737b90',
+          },
+          fontFamily: { body: ['Open Sans', 'sans-serif'], heading: ['Poppins', 'sans-serif'] },
+          boxShadow: { 'custom': '0 4px 12px rgba(45, 71, 120, 0.08)', 'custom-hover': '0 10px 20px rgba(45, 71, 120, 0.12)' }
+        }
+      }
     }
-
-    .module-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: 2.5rem 1.5rem;
-      transition: var(--transition);
-      border-top: 4px solid transparent;
-    }
-
-    .module-card:hover {
-      transform: translateY(-5px);
-      box-shadow: var(--shadow-hover);
-      border-top: 4px solid var(--color-accent);
-    }
-
-    .module-card .icon-wrapper {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background-color: rgba(100, 140, 188, 0.15);
-      color: var(--color-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      margin-bottom: 1.5rem;
-      transition: var(--transition);
-    }
-
-    .module-card:hover .icon-wrapper {
-      background-color: var(--color-primary);
-      color: white;
-    }
-
-    .module-card h3 {
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
-      color: var(--color-primary-dark);
-    }
-
-    .module-card p {
-      color: var(--color-text-muted);
-      font-size: 0.95rem;
-      margin-bottom: 1.5rem;
-      flex-grow: 1;
-    }
-
-    .module-card .btn {
-      width: 100%;
-      justify-content: center;
-    }
-  </style>
+  </script>
 </head>
-<body>
+<body class="font-body bg-bg text-textMain overflow-x-hidden">
 
-  <div class="dashboard-container">
-    
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Logo" class="brand-logo">
-        <span class="brand-name">Zafiro Home</span>
+  <div class="flex min-h-screen w-full relative">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[990] hidden lg:hidden"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[1000] w-[260px] bg-primary text-white flex flex-col transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 shadow-lg lg:shadow-none">
+      <div class="h-[70px] flex items-center px-6 gap-4 bg-primary-dark shrink-0">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Logo" class="w-10 h-10 rounded-full object-cover">
+        <span class="font-heading font-bold text-lg">Zafiro Home</span>
       </div>
 
-      <!-- Mobile Profile -->
-      <div class="sidebar-profile">
-        <div class="user-profile" style="margin-bottom: 1rem;">
-          <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="user-avatar">
-          <div class="user-info">
-            <span class="user-name">Admin Zafiro</span>
-            <span class="user-role">Super Administrador</span>
+      <div class="block lg:hidden p-6 bg-black/15 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover">
+          <div>
+            <div class="font-bold text-sm text-white">Admin Zafiro</div>
+            <div class="text-xs text-white/60">Super Administrador</div>
           </div>
         </div>
-        <button id="logout-btn-mobile" class="btn-logout" style="width: 100%; justify-content: center;"><i class="fa-solid fa-sign-out-alt"></i> Salir</button>
       </div>
-      
-      <!-- Full Sidebar Menu -->
-      <ul class="sidebar-nav">
-        <li><a href="admin.html" class="active"><i class="fa-solid fa-home"></i> Inicio</a></li>
-        <li class="nav-title">Módulos</li>
-        <li><a href="/Protected/pages/panels/productos.html"><i class="fa-solid fa-search"></i> Productos</a></li>
-        <li><a href="/Protected/pages/panels/categorias.html"><i class="fa-solid fa-layer-group"></i> Categorías</a></li>
-        <li><a href="/Protected/pages/panels/marcas.html"><i class="fa-solid fa-tags"></i> Marcas</a></li>
-        <li><a href="/Protected/pages/panels/cajas.html"><i class="fa-solid fa-box"></i> Cajas</a></li>
-        <li><a href="/Protected/pages/panels/unidades.html"><i class="fa-solid fa-ruler"></i> Unidades</a></li>
-        <li><a href="/Protected/pages/panels/presentaciones.html"><i class="fa fa-cubes"></i> Presentaciones</a></li>
-        <li class="nav-title">Administración</li>
-        <li><a href="/Protected/pages/panels/usuarios.html"><i class="fa-solid fa-users"></i> Usuarios</a></li>
+
+      <ul class="list-none py-4 flex-1 overflow-y-auto">
+        <li>
+          <a href="/Protected/pages/admin.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-accent bg-white/5">
+            <i class="fa-solid fa-home w-5 text-center text-accent"></i> <span class="text-white font-semibold">Inicio</span>
+          </a>
+        </li>
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Módulos</li>
+        <li>
+          <a href="/Protected/pages/panels/productos.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-search w-5 text-center"></i> Productos
+          </a>
+        </li>
+        <li>
+          <a href="/Protected/pages/panels/categorias.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-layer-group w-5 text-center"></i> Categorías
+          </a>
+        </li>
+        <li>
+          <a href="/Protected/pages/panels/marcas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-tags w-5 text-center"></i> Marcas
+          </a>
+        </li>
+        <li>
+          <a href="/Protected/pages/panels/cajas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-box w-5 text-center"></i> Cajas
+          </a>
+        </li>
+        <li>
+          <a href="/Protected/pages/panels/unidades.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-ruler w-5 text-center"></i> Unidades
+          </a>
+        </li>
+        <li>
+          <a href="/Protected/pages/panels/presentaciones.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-cubes w-5 text-center"></i> Presentaciones
+          </a>
+        </li>
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Administración</li>
+        <li>
+          <a href="/Protected/pages/panels/usuarios.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-users w-5 text-center"></i> Usuarios
+          </a>
+        </li>
       </ul>
     </aside>
 
-    <!-- Main Content -->
-    <div class="main-content">
+    <div class="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:ml-[260px]">
       
-      <!-- Topbar -->
-      <header class="topbar">
-        <button class="menu-toggle" id="menu-toggle">
+            <!-- Topbar -->
+      <header class="h-[70px] bg-card flex items-center justify-between px-4 sm:px-8 shadow-sm sticky top-0 z-[900]">
+        <button id="menu-toggle" class="lg:hidden text-primary text-2xl p-2 focus:outline-none">
           <i class="fa-solid fa-bars"></i>
         </button>
         
         <!-- User Interface -->
-        <div class="topbar-right">
-          <div class="user-profile">
-            <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="user-avatar">
-            <div class="user-info">
-              <span class="user-name">Admin Zafiro</span>
-              <span class="user-role">Super Administrador</span>
+        <div class="hidden sm:flex items-center gap-6 ml-auto">
+          <div class="flex items-center gap-4">
+            <a href="/Protected/pages/admin.html" class="text-primary font-semibold flex items-center gap-2 hover:text-accent transition-colors"><i class="fa-solid fa-home"></i> Inicio</a>
+            
+            <img id="header-avatar" src="https://ui-avatars.com/api/?name=Usuario&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover shadow-sm">
+            
+            <div class="flex flex-col">
+              <span id="header-username" class="font-bold text-sm leading-tight text-textMain">Cargando...</span>
+              <span id="header-role" class="text-xs text-textMuted">Cargando...</span>
             </div>
           </div>
-          <button id="logout-btn" class="btn-logout"><i class="fa-solid fa-sign-out-alt"></i> Salir</button>
+
+          <button id="logout-btn" class="bg-danger text-white px-4 py-2 rounded-md ...">
+            <i class="fa-solid fa-sign-out-alt"></i> Salir
+          </button>
         </div>
+        
+        <!-- Botón de salir para móvil ultra pequeño -->
+        <button class="sm:hidden bg-danger text-white px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-red-800 transition-colors ml-auto">
+          <i class="fa-solid fa-sign-out-alt"></i>
+        </button>
       </header>
 
-      <!-- Dashboard Body -->
-      <main class="dashboard-body">
+      <main class="p-4 sm:p-8 flex-1">
         
-        <!-- Module Title Card -->
-        <section class="card" style="background-color: var(--color-primary); color: white; margin-bottom: 1.5rem; padding: 2.5rem 2rem; border-radius: var(--radius); position: relative; overflow: hidden;">
-          <!-- Decoración de fondo -->
-          <i class="fa-solid fa-chart-line" style="position: absolute; right: -20px; bottom: -40px; font-size: 15rem; color: rgba(255,255,255,0.05); transform: rotate(-15deg);"></i>
-          
-          <div style="position: relative; z-index: 1;">
-            <h1 style="color: white; margin-bottom: 0.5rem; font-size: 2.2rem;">Bienvenido, Admin Zafiro 👋</h1>
-            <p style="color: #b0b8c9; margin: 0; font-size: 1.1rem; max-width: 600px;">Desde este panel puedes controlar todo el inventario, configurar parámetros del sistema y gestionar los accesos de tu equipo.</p>
-          </div>
+        <section class="bg-primary text-white rounded-xl p-6 sm:p-8 shadow-custom mb-8">
+          <h1 class="font-heading text-2xl sm:text-3xl font-bold mb-2">Panel de Control General</h1>
+          <p class="text-blue-200 text-sm sm:text-base">Bienvenido al sistema administrativo Zafiro Home. Selecciona un módulo para comenzar.</p>
         </section>
 
-        <!-- Grid de Accesos Directos -->
-        <h2 style="margin: 2rem 0 0.5rem 0; color: var(--color-primary-dark);">Accesos Rápidos</h2>
-        <p style="color: var(--color-text-muted); margin-bottom: 1rem;">Selecciona el módulo al que deseas ingresar.</p>
-        
-        <div class="modules-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
           
-          <!-- Card: Productos -->
-          <div class="card module-card">
-            <div class="icon-wrapper"><i class="fa-solid fa-search"></i></div>
-            <h3>Productos</h3>
-            <p>Catálogo general, consulta de existencias y reportes detallados.</p>
-            <a href="/Protected/pages/panels/productos.html" class="btn btn-primary">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+          <div class="bg-card flex flex-col items-center text-center p-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-custom-hover shadow-custom border-t-4 border-primary">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-primary/10 text-primary text-2xl">
+              <i class="fa-solid fa-search"></i>
+            </div>
+            <h3 class="font-heading text-xl font-bold text-textMain mb-2">Productos</h3>
+            <p class="text-textMuted text-sm mb-6 flex-1">Administración del catálogo general, precios, stock y detalles técnicos.</p>
+            <a href="/Protected/pages/panels/productos.html" class="bg-primary text-white px-5 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors w-full flex justify-center items-center gap-2">
+              Ingresar <i class="fa-solid fa-arrow-right"></i>
+            </a>
           </div>
 
-          <!-- Card: Categorías -->
-          <div class="card module-card">
-            <div class="icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>
-            <h3>Categorías</h3>
-            <p>Organiza tu inventario en familias y líneas de negocio.</p>
-            <a href="/Protected/pages/panels/categorias.html" class="btn btn-ghost">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+          <div class="bg-card flex flex-col items-center text-center p-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-custom-hover shadow-custom border-t-4 border-secondary">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-secondary/10 text-secondary text-2xl">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <h3 class="font-heading text-xl font-bold text-textMain mb-2">Categorías</h3>
+            <p class="text-textMuted text-sm mb-6 flex-1">Clasificación y agrupación de productos para su correcta organización.</p>
+            <a href="/Protected/pages/panels/categorias.html" class="bg-secondary text-white px-5 py-2.5 rounded-md font-semibold hover:bg-[#5579a3] transition-colors w-full flex justify-center items-center gap-2">
+              Ingresar <i class="fa-solid fa-arrow-right"></i>
+            </a>
           </div>
 
-          <!-- Card: Marcas -->
-          <div class="card module-card">
-            <div class="icon-wrapper"><i class="fa-solid fa-tags"></i></div>
-            <h3>Marcas</h3>
-            <p>Controla las firmas y proveedores de los productos.</p>
-            <a href="/Protected/pages/panels/marcas.html" class="btn btn-ghost">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+          <div class="bg-card flex flex-col items-center text-center p-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-custom-hover shadow-custom border-t-4 border-accent">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-accent/10 text-accent text-2xl">
+              <i class="fa-solid fa-tags"></i>
+            </div>
+            <h3 class="font-heading text-xl font-bold text-textMain mb-2">Marcas</h3>
+            <p class="text-textMuted text-sm mb-6 flex-1">Gestión de marcas comerciales de los productos ofrecidos en el sistema.</p>
+            <a href="/Protected/pages/panels/marcas.html" class="bg-accent text-white px-5 py-2.5 rounded-md font-semibold hover:bg-accent-dark transition-colors w-full flex justify-center items-center gap-2">
+              Ingresar <i class="fa-solid fa-arrow-right"></i>
+            </a>
           </div>
 
-          <!-- Card: Cajas -->
-          <div class="card module-card">
-            <div class="icon-wrapper"><i class="fa-solid fa-box"></i></div>
-            <h3>Cajas</h3>
-            <p>Administra la ubicación física y almacenaje en el sistema.</p>
-            <a href="/Protected/pages/panels/cajas.html" class="btn btn-ghost">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+          <div class="bg-card flex flex-col items-center text-center p-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-custom-hover shadow-custom border-t-4 border-success">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-success/10 text-success text-2xl">
+              <i class="fa-solid fa-box"></i>
+            </div>
+            <h3 class="font-heading text-xl font-bold text-textMain mb-2">Cajas</h3>
+            <p class="text-textMuted text-sm mb-6 flex-1">Control de cajas, empaques y sus dimensiones para la distribución.</p>
+            <a href="/Protected/pages/panels/cajas.html" class="bg-success text-white px-5 py-2.5 rounded-md font-semibold hover:bg-green-700 transition-colors w-full flex justify-center items-center gap-2">
+              Ingresar <i class="fa-solid fa-arrow-right"></i>
+            </a>
           </div>
 
-          <!-- Card: Unidades -->
-          <div class="card module-card">
-            <div class="icon-wrapper"><i class="fa-solid fa-ruler"></i></div>
-            <h3>Unidades</h3>
-            <p>Métricas de longitud (cm, m, in) estandarizadas.</p>
-            <a href="/Protected/pages/panels/unidades.html" class="btn btn-ghost">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+          <div class="bg-card flex flex-col items-center text-center p-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-custom-hover shadow-custom border-t-4 border-primary">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-primary/10 text-primary text-2xl">
+              <i class="fa-solid fa-ruler"></i>
+            </div>
+            <h3 class="font-heading text-xl font-bold text-textMain mb-2">Unidades</h3>
+            <p class="text-textMuted text-sm mb-6 flex-1">Configuración y gestión de las diferentes unidades de medida.</p>
+            <a href="/Protected/pages/panels/unidades.html" class="bg-primary text-white px-5 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors w-full flex justify-center items-center gap-2">
+              Ingresar <i class="fa-solid fa-arrow-right"></i>
+            </a>
           </div>
 
-          <!-- Card: Presentaciones -->
-          <div class="card module-card">
-            <div class="icon-wrapper"><i class="fa-solid fa-cubes"></i></div>
-            <h3>Presentaciones</h3>
-            <p>Métricas de capacidad (unidad, caja, bote) para tus artículos.</p>
-            <a href="/Protected/pages/panels/presentaciones.html" class="btn btn-ghost">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+          <div class="bg-card flex flex-col items-center text-center p-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-custom-hover shadow-custom border-t-4 border-secondary">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-secondary/10 text-secondary text-2xl">
+              <i class="fa-solid fa-cubes"></i>
+            </div>
+            <h3 class="font-heading text-xl font-bold text-textMain mb-2">Presentaciones</h3>
+            <p class="text-textMuted text-sm mb-6 flex-1">Administración de presentaciones, paquetes y formatos del sistema.</p>
+            <a href="/Protected/pages/panels/presentaciones.html" class="bg-secondary text-white px-5 py-2.5 rounded-md font-semibold hover:bg-[#5579a3] transition-colors w-full flex justify-center items-center gap-2">
+              Ingresar <i class="fa-solid fa-arrow-right"></i>
+            </a>
           </div>
 
-          <!-- Card: Usuarios -->
-          <div class="card module-card" style="border-top: 4px solid var(--color-danger);">
-            <div class="icon-wrapper" style="background-color: rgba(165, 35, 12, 0.1); color: var(--color-danger);"><i class="fa-solid fa-users"></i></div>
-            <h3>Usuarios</h3>
-            <p>Gestión de accesos, creación de cuentas y roles de permisos.</p>
-            <a href="/Protected/pages/panels/usuarios.html" class="btn btn-primary" style="background-color: var(--color-danger);">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+          <div class="bg-card flex flex-col items-center text-center p-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-custom-hover shadow-custom border-t-4 border-danger">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-danger/10 text-danger text-2xl">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <h3 class="font-heading text-xl font-bold text-textMain mb-2">Usuarios</h3>
+            <p class="text-textMuted text-sm mb-6 flex-1">Gestión de accesos, creación de cuentas y roles de permisos.</p>
+            <a href="/Protected/pages/panels/usuarios.html" class="bg-danger text-white px-5 py-2.5 rounded-md font-semibold hover:bg-red-800 transition-colors w-full flex justify-center items-center gap-2">
+              Ingresar <i class="fa-solid fa-arrow-right"></i>
+            </a>
           </div>
 
         </div>
-
       </main>
     </div>
   </div>
@@ -220,27 +220,24 @@
     document.addEventListener("DOMContentLoaded", function() {
       const menuToggle = document.getElementById("menu-toggle");
       const sidebar = document.getElementById("sidebar");
+      const sidebarOverlay = document.getElementById("sidebar-overlay");
 
-      // Toggles sidebar open/closed on mobile
-      if(menuToggle && sidebar) {
-        menuToggle.addEventListener("click", function() {
-          sidebar.classList.toggle("active");
-        });
+      function toggleSidebar() {
+        if(sidebar) sidebar.classList.toggle("-translate-x-full");
+        if(sidebarOverlay) sidebarOverlay.classList.toggle("hidden");
       }
 
-      // Close sidebar if user clicks outside of it on mobile
-      document.addEventListener("click", function(event) {
-        if(sidebar && menuToggle) {
-          const isClickInsideSidebar = sidebar.contains(event.target);
-          const isClickOnMenuToggle = menuToggle.contains(event.target);
-          
-          if (!isClickInsideSidebar && !isClickOnMenuToggle && window.innerWidth <= 992) {
-            sidebar.classList.remove("active");
-          }
-        }
-      });
+      if(menuToggle) {
+        menuToggle.addEventListener("click", toggleSidebar);
+      }
+
+      if(sidebarOverlay) {
+        sidebarOverlay.addEventListener("click", toggleSidebar);
+      }
     });
   </script>
+
+  <script src="/Protected/scripts/sessionManager.js"></script>
 
 </body>
 </html>
