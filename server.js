@@ -19,14 +19,14 @@ const swaggerUi    = require('swagger-ui-express');
 const { db } = require('./db/dbconnector.js');
 
 // Importar Enrutadores
-const authModule             = require('./Routes/authRouter.js'); 
+const authModule             = require('/Server/Routes/authRouter.js'); // Exporta router + middlewares de auth
 const authRouter             = authModule.router || authModule; 
-const UnidadesRouter         = require('./Routes/unidadesRouter.js');
-const cajasRouter            = require('./Routes/cajasRouter.js');
-const categoriasRouter       = require('./Routes/categoriasRouter.js');
-const marcasRouter           = require('./Routes/marcasRouter.js');
-const presentacionesRouter   = require('./Routes/presentacionesRouter.js');
-const productosRouter        = require('./Routes/productosRouter.js');
+const UnidadesRouter         = require('/Server/Routes/unidadesRouter.js');
+const cajasRouter            = require('/Server/Routes/cajasRouter.js');
+const categoriasRouter       = require('/Server/Routes/categoriasRouter.js');
+const marcasRouter           = require('/Server/Routes/marcasRouter.js');
+const presentacionesRouter   = require('/Server/Routes/presentacionesRouter.js');
+const productosRouter        = require('/Server/Routes/productosRouter.js');
 
 // Middlewares de autorización para proteger las rutas
 const { requireAuth, requireAdmin, requireUser } = authModule;
