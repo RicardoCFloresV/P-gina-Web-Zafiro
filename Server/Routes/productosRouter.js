@@ -1,126 +1,36 @@
-// Server/routes/productosRouter.js
-// Stored Procedures usados (parámetros y retorno esperado):
-// - productos_insert(
-//     @nombre NVARCHAR(100),
-//     @descripcion NVARCHAR(255)=NULL,
-//     @precio DECIMAL(10,2),
-//     @categoria_principal_id INT,
-//     @categoria_secundaria_id INT = NULL,
-//     @subcategoria_id INT = NULL,
-//     @unit_id INT,
-//     @unit_value DECIMAL(10,2),
-//     @size_id INT,
-//     @size_value NVARCHAR(50),
-//     @brand_id INT
-//   )
-//   -> RETURNS: [ { producto_id, nombre, descripcion, precio, estado,
-//                  categoria_principal_id, categoria_principal_nombre,
-//                  categoria_secundaria_id, categoria_secundaria_nombre,
-//                  subcategoria_id, subcategoria_nombre,
-//                  unit_id, unit_nombre, unit_value,
-//                  size_id, size_nombre, size_value,
-//                  brand_id, brand_nombre, fecha_creacion } ]
+// Server/Routes/productosRouter.js
+// Recurso: PRODUCTOS + STOCK (cajas_detalles)
+// Montaje: app.use('/api/productos', productosRouter)
 //
-// - productos_update(
-//     @producto_id INT, @nombre NVARCHAR(100), @descripcion NVARCHAR(255)=NULL,
-//     @precio DECIMAL(10,2), @categoria_principal_id INT,
-//     @categoria_secundaria_id INT=NULL, @subcategoria_id INT=NULL,
-//     @unit_id INT, @unit_value DECIMAL(10,2),
-//     @size_id INT, @size_value NVARCHAR(50),
-//     @brand_id INT, @estado BIT = NULL
-//   )
-//   -> RETURNS: (misma fila unida que insert)
-//
-// - productos_soft_delete(@producto_id INT)
-//   -> RETURNS: [ { producto_id, nombre, descripcion, precio, estado } ]
-//
-// - productos_delete(@producto_id INT, @force BIT = 0)  // cauteloso
-//   -> RETURNS: [ { producto_id, estado_operacion = 'Eliminado' } ]
-//
-// - productos_get_all()
-//   -> RETURNS: (filas unidas + stock_total)
-//
-// - productos_get_all_active()
-//   -> RETURNS: (filas unidas + stock_total) WHERE estado=1
-//
-// - productos_get_list()
-//   -> RETURNS: [ { producto_id, nombre, categoria_principal_id, categoria_principal_nombre, brand_id, brand_nombre } ]
-//
-// - productos_get_by_id(@producto_id INT)
-//   -> RETURNS: (fila unida + stock_total) 0/1
-//
-// - productos_get_list_by_category_id(@categoria_principal_id INT)
-//   -> RETURNS: lista simple (activos)
-//
-// - productos_get_by_caja_id(@caja_id INT)
-//   -> RETURNS: [ { detalle_id, producto_id, producto_nombre, descripcion, precio,
-//                   categoria_principal_id, categoria_principal_nombre,
-//                   brand_id, brand_nombre, stock, caja_etiqueta } ]
-//
-// - productos_search_by_price_range(@precio_min DECIMAL(10,2)=NULL, @precio_max DECIMAL(10,2)=NULL)
-//   -> RETURNS: lista con stock_total
-//
-// - productos_search_by_nombre(@search_term NVARCHAR(100))
-//   -> RETURNS: lista con stock_total
-//
-// - productos_get_by_cajas()
-//   -> RETURNS: [ { caja_id, caja_etiqueta, producto_id, producto_nombre, stock, categoria_principal_nombre, precio, valor_en_caja } ]
+// ┌────────────────────────────────┬─────────────────────────────────────┬──────────────────────────────────────────────────────────────────┐
+// │ Endpoint                       │ SP llamado                          │ Datos de retorno                                                 │
+// ├────────────────────────────────┼─────────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+// │ POST /insert_with_stock        │ productos_insert_with_stock         │ { producto completo + caja_id, stock }                           │
+// │ POST /insert_without_stock     │ productos_insert_without_stock      │ { producto completo }                                            │
+// │ POST /update                   │ productos_update                    │ { producto completo }                                            │
+// │ POST /set_state                │ productos_set_state                 │ (ninguno)                                                        │
+// │ POST /add_stock                │ productos_add_stock                 │ (ninguno)                                                        │
+// │ POST /remove_stock             │ productos_remove_stock              │ (ninguno)                                                        │
+// │ POST /set_stock                │ productos_set_stock                 │ (ninguno)                                                        │
+// │ GET  /get_all                  │ productos_get_all                   │ [{ producto + stock_total }]                                     │
+// │ GET  /without_stock            │ productos_get_without_stock         │ [{ producto sin stock }]  (solo activos)                         │
+// │ GET  /por_id/:id               │ productos_get_by_id                 │ { producto + stock_total }                                       │
+// │ GET  /por_nombre/:nombre       │ productos_get_by_nombre             │ [{ producto + stock_total }]                                     │
+// │ GET  /por_categoria/:id        │ productos_get_by_categoria          │ [{ producto + stock_total }]                                     │
+// │ GET  /por_marca/:id            │ productos_get_by_marca              │ [{ producto + stock_total }]                                     │
+// │ GET  /por_unidad/:id           │ productos_get_by_unidad             │ [{ producto + stock_total }]                                     │
+// │ GET  /detalle_caja/:id         │ productos_get_detalle_por_caja      │ [{ producto + caja_ubicacion + stock }]                          │
+// │ GET  /count_by_caja/:id?       │ productos_get_count_by_caja_id      │ [{ caja_id, etiqueta, cantidad_productos }]                      │
+// └────────────────────────────────┴─────────────────────────────────────┴──────────────────────────────────────────────────────────────────┘
 
 const express = require('express');
 const { db, sql } = require('../../db/dbconnector.js');
-const ValidationService = require('../Validators/validatorService.js');
-const { requireAuth, requireAdmin } = require('./authRouter.js'); // cambia a authRouter.js si aplica
+const { requireAuth, requireAdmin } = require('./authRouter.js');
 
-// Reglas de validación (simples y auto-contenidas)
-const Rules = {
-  Insert: {
-    nombre: { required: true, type: 'string', trim: true, minLength: 1, maxLength: 100 },
-    descripcion: { required: false, type: 'string', trim: true, maxLength: 255 },
-    precio: { required: true, type: 'number', min: 0 },
-    categoria_principal_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'categoria_principal_id inválido' },
-    categoria_secundaria_id: { required: false, custom: v => (v==null || Number.isInteger(Number(v))) || 'categoria_secundaria_id inválido' },
-    subcategoria_id: { required: false, custom: v => (v==null || Number.isInteger(Number(v))) || 'subcategoria_id inválido' },
-    unit_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'unit_id inválido' },
-    unit_value: { required: true, type: 'number', min: 0 },
-    size_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'size_id inválido' },
-    size_value: { required: true, type: 'string', trim: true, minLength: 1, maxLength: 50 },
-    brand_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'brand_id inválido' }
-  },
-  Update: {
-    producto_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'producto_id inválido' },
-    nombre: { required: true, type: 'string', trim: true, minLength: 1, maxLength: 100 },
-    descripcion: { required: false, type: 'string', trim: true, maxLength: 255 },
-    precio: { required: true, type: 'number', min: 0 },
-    categoria_principal_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'categoria_principal_id inválido' },
-    categoria_secundaria_id: { required: false, custom: v => (v==null || Number.isInteger(Number(v))) || 'categoria_secundaria_id inválido' },
-    subcategoria_id: { required: false, custom: v => (v==null || Number.isInteger(Number(v))) || 'subcategoria_id inválido' },
-    unit_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'unit_id inválido' },
-    unit_value: { required: true, type: 'number', min: 0 },
-    size_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'size_id inválido' },
-    size_value: { required: true, type: 'string', trim: true, minLength: 1, maxLength: 50 },
-    brand_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'brand_id inválido' },
-    estado: { required: false, custom: v => (v===undefined || v===null || v===0 || v===1 || v===true || v===false) || 'estado inválido' }
-  },
-  PorId: { producto_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'producto_id inválido' } },
-  Delete: {
-    producto_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'producto_id inválido' },
-    force: { required: false, custom: v => (v===undefined || v===null || v===0 || v===1 || v===true || v===false) || 'force inválido' }
-  },
-  SoftDelete: { producto_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'producto_id inválido' } },
-  ByCategoria: { categoria_principal_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'categoria_principal_id inválido' } },
-  ByCaja: { caja_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'caja_id inválido' } },
-  SearchNombre: { search_term: { required: true, type: 'string', trim: true, minLength: 1, maxLength: 100 } },
-  SearchPrecio: {
-    precio_min: { required: false, type: 'number', min: 0 },
-    precio_max: { required: false, type: 'number', min: 0 }
-  },
-  SetPrecio: {
-    producto_id: { required: true, custom: v => (Number.isInteger(Number(v)) && v > 0) || 'producto_id inválido' },
-    precio: { required: true, type: 'number', min: 0 }
-  }
-};
+const ProductosRouter = express.Router();
 
-const Router = express.Router();
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function BuildParams(entries) {
   const p = {};
@@ -128,263 +38,608 @@ function BuildParams(entries) {
   return p;
 }
 
-/* ============================= INSERT (auth) ============================== */
-Router.post('/insert', requireAuth, async (req, res) => {
+// Mapeo de códigos de error SQL → { status HTTP, mensaje amigable }
+// Códigos 52010–52052 de los SPs de productos y stock
+const SQL_ERROR_MAP = {
+  // ── productos_insert / update ──
+  52010: { status: 404, message: 'Producto no encontrado.' },
+  52011: { status: 400, message: 'El nombre del producto es obligatorio.' },
+  52012: { status: 409, message: 'Ya existe otro producto con ese nombre y marca.' },
+  52013: { status: 400, message: 'La categoría seleccionada no existe o está inactiva.' },
+  52014: { status: 400, message: 'La unidad seleccionada no existe o está inactiva.' },
+  52015: { status: 400, message: 'La marca seleccionada no existe o está inactiva.' },
+  52016: { status: 400, message: 'El precio no puede ser negativo.' },
+  52017: { status: 400, message: 'El valor de unidad debe ser mayor que cero.' },
+  52018: { status: 400, message: 'La presentación seleccionada no existe o está inactiva.' },
+  52019: { status: 404, message: 'La caja seleccionada no fue encontrada.' },
+  52020: { status: 400, message: 'El stock no puede ser negativo.' },
+
+  // ── productos_set_state ──
+  52021: { status: 409, message: 'No se puede desactivar: el producto aún tiene stock físico en una o más cajas.' },
+
+  // ── productos_add_stock ──
+  52030: { status: 400, message: 'La cantidad a agregar debe ser mayor a 0.' },
+  52031: { status: 404, message: 'El producto no existe.' },
+  52032: { status: 404, message: 'La caja no existe.' },
+
+  // ── productos_remove_stock ──
+  52040: { status: 400, message: 'La cantidad a retirar debe ser mayor a 0.' },
+  52041: { status: 404, message: 'El producto no se encuentra en la caja especificada.' },
+  52042: { status: 409, message: 'Stock insuficiente para retirar esa cantidad.' },
+
+  // ── productos_set_stock ──
+  52050: { status: 400, message: 'El stock no puede ser negativo.' },
+  52051: { status: 404, message: 'El producto no existe.' },
+  52052: { status: 404, message: 'La caja no existe.' },
+};
+
+function handleSqlError(err, res, fallbackMsg) {
+  const code = err?.number || err?.originalError?.info?.number;
+  if (code && SQL_ERROR_MAP[code]) {
+    const mapped = SQL_ERROR_MAP[code];
+    return res.status(mapped.status).json({ success: false, message: mapped.message });
+  }
+  console.error(fallbackMsg, err);
+  return res.status(500).json({ success: false, message: fallbackMsg });
+}
+
+
+// ─── Validadores inline ───────────────────────────────────────────────────────
+
+function validarIdPositivo(valor, campo) {
+  const n = Number(valor);
+  if (!Number.isInteger(n) || n < 1) return `${campo} debe ser un entero positivo.`;
+  return null;
+}
+
+function validarNombre(nombre) {
+  if (typeof nombre !== 'string' || nombre.trim() === '') return 'El nombre es obligatorio.';
+  if (nombre.trim().length > 100) return 'El nombre no puede exceder 100 caracteres.';
+  return null;
+}
+
+function validarPrecio(precio) {
+  const n = Number(precio);
+  if (isNaN(n) || n < 0) return 'El precio no puede ser negativo.';
+  return null;
+}
+
+function validarUnidadValor(valor) {
+  const n = Number(valor);
+  if (isNaN(n) || n <= 0) return 'El valor de unidad debe ser mayor que cero.';
+  return null;
+}
+
+function validarEstado(estado) {
+  const n = Number(estado);
+  if (isNaN(n) || (n !== 0 && n !== 1)) return 'estado debe ser 0 (inactivo) o 1 (activo).';
+  return null;
+}
+
+function validarCantidad(cantidad, campo) {
+  const n = Number(cantidad);
+  if (!Number.isInteger(n) || n < 0) return `${campo} debe ser un entero no negativo.`;
+  return null;
+}
+
+function validar(checks) {
+  const errors = checks.filter(e => e !== null);
+  return { isValid: errors.length === 0, errors };
+}
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POST /insert_with_stock   (auth requerido)
+//  ► Datos esperados : { nombre, descripcion?, precio, categoria_id, unidad_id,
+//                        unidad_valor, presentacion_id, marca_id, caja_id, stock }
+//  ► SP llamado      : productos_insert_with_stock
+//  ► Retorna          : { producto completo + caja_id, stock }
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.post('/insert_with_stock', requireAuth, async (req, res) => {
   try {
-    const B = req.body;
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.Insert);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (insert)', errors });
+    const { nombre, descripcion, precio, categoria_id, unidad_id,
+            unidad_valor, presentacion_id, marca_id, caja_id, stock } = req.body;
+
+    const { isValid, errors } = validar([
+      validarNombre(nombre),
+      validarPrecio(precio),
+      validarIdPositivo(categoria_id, 'categoria_id'),
+      validarIdPositivo(unidad_id, 'unidad_id'),
+      validarUnidadValor(unidad_valor),
+      validarIdPositivo(presentacion_id, 'presentacion_id'),
+      validarIdPositivo(marca_id, 'marca_id'),
+      validarIdPositivo(caja_id, 'caja_id'),
+      validarCantidad(stock, 'stock'),
+    ]);
+    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos', errors });
 
     const params = BuildParams([
-      { name:'nombre',  type: sql.NVarChar(100), value: B.nombre },
-      { name:'descripcion', type: sql.NVarChar(255), value: B.descripcion ?? null },
-      { name:'precio',  type: sql.Decimal(10,2), value: Number(B.precio) },
-      { name:'categoria_principal_id', type: sql.Int, value: Number(B.categoria_principal_id) },
-      { name:'categoria_secundaria_id', type: sql.Int, value: B.categoria_secundaria_id!=null ? Number(B.categoria_secundaria_id) : null },
-      { name:'subcategoria_id',        type: sql.Int, value: B.subcategoria_id!=null ? Number(B.subcategoria_id) : null },
-      { name:'unit_id',   type: sql.Int, value: Number(B.unit_id) },
-      { name:'unit_value',type: sql.Decimal(10,2), value: Number(B.unit_value) },
-      { name:'size_id',   type: sql.Int, value: Number(B.size_id) },
-      { name:'size_value',type: sql.NVarChar(50), value: B.size_value },
-      { name:'brand_id',  type: sql.Int, value: Number(B.brand_id) }
+      { name: 'nombre',          type: sql.NVarChar(100),   value: nombre.trim() },
+      { name: 'descripcion',     type: sql.NVarChar(255),   value: descripcion ? descripcion.trim() : null },
+      { name: 'precio',          type: sql.Decimal(10, 2),  value: Number(precio) },
+      { name: 'categoria_id',    type: sql.Int,             value: Number(categoria_id) },
+      { name: 'unidad_id',       type: sql.Int,             value: Number(unidad_id) },
+      { name: 'unidad_valor',    type: sql.Decimal(10, 2),  value: Number(unidad_valor) },
+      { name: 'presentacion_id', type: sql.Int,             value: Number(presentacion_id) },
+      { name: 'marca_id',        type: sql.Int,             value: Number(marca_id) },
+      { name: 'caja_id',         type: sql.Int,             value: Number(caja_id) },
+      { name: 'stock',           type: sql.Int,             value: Number(stock) },
     ]);
 
-    const data = await db.executeProc('productos_insert', params);
-    return res.status(201).json({ success:true, message:'Producto creado', data });
+    const data = await db.executeProc('productos_insert_with_stock', params);
+    return res.status(201).json({ success: true, message: 'Producto creado con stock inicial', data });
+
   } catch (err) {
-    console.error('productos_insert error:', err);
-    return res.status(500).json({ success:false, message:'Error al crear el producto' });
+    return handleSqlError(err, res, 'Error al crear el producto con stock');
   }
 });
 
-/* ============================= UPDATE (auth) ============================== */
-Router.post('/update', requireAuth, async (req, res) => {
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POST /insert_without_stock   (auth requerido)
+//  ► Datos esperados : { nombre, descripcion?, precio, categoria_id, unidad_id,
+//                        unidad_valor, presentacion_id, marca_id }
+//  ► SP llamado      : productos_insert_without_stock
+//  ► Retorna          : { producto completo }
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.post('/insert_without_stock', requireAuth, async (req, res) => {
   try {
-    const B = req.body;
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.Update);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (update)', errors });
+    const { nombre, descripcion, precio, categoria_id, unidad_id,
+            unidad_valor, presentacion_id, marca_id } = req.body;
+
+    const { isValid, errors } = validar([
+      validarNombre(nombre),
+      validarPrecio(precio),
+      validarIdPositivo(categoria_id, 'categoria_id'),
+      validarIdPositivo(unidad_id, 'unidad_id'),
+      validarUnidadValor(unidad_valor),
+      validarIdPositivo(presentacion_id, 'presentacion_id'),
+      validarIdPositivo(marca_id, 'marca_id'),
+    ]);
+    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos', errors });
 
     const params = BuildParams([
-      { name:'producto_id', type: sql.Int, value: Number(B.producto_id) },
-      { name:'nombre',      type: sql.NVarChar(100), value: B.nombre },
-      { name:'descripcion', type: sql.NVarChar(255), value: B.descripcion ?? null },
-      { name:'precio',      type: sql.Decimal(10,2), value: Number(B.precio) },
-      { name:'categoria_principal_id', type: sql.Int, value: Number(B.categoria_principal_id) },
-      { name:'categoria_secundaria_id', type: sql.Int, value: B.categoria_secundaria_id!=null ? Number(B.categoria_secundaria_id) : null },
-      { name:'subcategoria_id',        type: sql.Int, value: B.subcategoria_id!=null ? Number(B.subcategoria_id) : null },
-      { name:'unit_id',   type: sql.Int, value: Number(B.unit_id) },
-      { name:'unit_value',type: sql.Decimal(10,2), value: Number(B.unit_value) },
-      { name:'size_id',   type: sql.Int, value: Number(B.size_id) },
-      { name:'size_value',type: sql.NVarChar(50), value: B.size_value },
-      { name:'brand_id',  type: sql.Int, value: Number(B.brand_id) },
-      { name:'estado',    type: sql.Bit, value: B.estado===undefined? null : (B.estado ? 1 : 0) }
+      { name: 'nombre',          type: sql.NVarChar(100),   value: nombre.trim() },
+      { name: 'descripcion',     type: sql.NVarChar(255),   value: descripcion ? descripcion.trim() : null },
+      { name: 'precio',          type: sql.Decimal(10, 2),  value: Number(precio) },
+      { name: 'categoria_id',    type: sql.Int,             value: Number(categoria_id) },
+      { name: 'unidad_id',       type: sql.Int,             value: Number(unidad_id) },
+      { name: 'unidad_valor',    type: sql.Decimal(10, 2),  value: Number(unidad_valor) },
+      { name: 'presentacion_id', type: sql.Int,             value: Number(presentacion_id) },
+      { name: 'marca_id',        type: sql.Int,             value: Number(marca_id) },
     ]);
 
+    const data = await db.executeProc('productos_insert_without_stock', params);
+    return res.status(201).json({ success: true, message: 'Producto creado (sin stock inicial)', data });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al crear el producto');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POST /update   (auth requerido)
+//  ► Datos esperados : { producto_id, nombre, descripcion?, precio, categoria_id,
+//                        unidad_id, unidad_valor, presentacion_id, marca_id, estado? }
+//  ► SP llamado      : productos_update
+//  ► Retorna          : { producto completo }
+//  NOTA: No cambia stock ni caja — eso se hace con add/remove/set_stock
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.post('/update', requireAuth, async (req, res) => {
+  try {
+    const { producto_id, nombre, descripcion, precio, categoria_id, unidad_id,
+            unidad_valor, presentacion_id, marca_id, estado } = req.body;
+
+    const checks = [
+      validarIdPositivo(producto_id, 'producto_id'),
+      validarNombre(nombre),
+      validarPrecio(precio),
+      validarIdPositivo(categoria_id, 'categoria_id'),
+      validarIdPositivo(unidad_id, 'unidad_id'),
+      validarUnidadValor(unidad_valor),
+      validarIdPositivo(presentacion_id, 'presentacion_id'),
+      validarIdPositivo(marca_id, 'marca_id'),
+    ];
+    if (estado !== undefined && estado !== null) checks.push(validarEstado(estado));
+
+    const { isValid, errors } = validar(checks);
+    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos', errors });
+
+    const paramEntries = [
+      { name: 'producto_id',     type: sql.Int,             value: Number(producto_id) },
+      { name: 'nombre',          type: sql.NVarChar(100),   value: nombre.trim() },
+      { name: 'descripcion',     type: sql.NVarChar(255),   value: descripcion ? descripcion.trim() : null },
+      { name: 'precio',          type: sql.Decimal(10, 2),  value: Number(precio) },
+      { name: 'categoria_id',    type: sql.Int,             value: Number(categoria_id) },
+      { name: 'unidad_id',       type: sql.Int,             value: Number(unidad_id) },
+      { name: 'unidad_valor',    type: sql.Decimal(10, 2),  value: Number(unidad_valor) },
+      { name: 'presentacion_id', type: sql.Int,             value: Number(presentacion_id) },
+      { name: 'marca_id',        type: sql.Int,             value: Number(marca_id) },
+      { name: 'estado',          type: sql.Bit,             value: (estado !== undefined && estado !== null) ? Number(estado) : null },
+    ];
+
+    const params = BuildParams(paramEntries);
     const data = await db.executeProc('productos_update', params);
-    return res.status(200).json({ success:true, message:'Producto actualizado', data });
+    return res.status(200).json({ success: true, message: 'Producto actualizado', data });
+
   } catch (err) {
-    console.error('productos_update error:', err);
-    return res.status(500).json({ success:false, message:'Error al actualizar el producto' });
+    return handleSqlError(err, res, 'Error al actualizar el producto');
   }
 });
 
-/* ========================== SOFT DELETE (auth) ============================ */
-Router.post('/soft_delete', requireAuth, async (req, res) => {
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POST /set_state   (auth requerido)
+//  ► Datos esperados : { producto_id: Number, estado: Number(0|1) }
+//  ► SP llamado      : productos_set_state(@producto_id, @estado)
+//  ► Retorna          : (ninguno — solo confirmación)
+//  NOTA: No puede desactivar si tiene stock > 0 en alguna caja
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.post('/set_state', requireAuth, async (req, res) => {
   try {
-    const B = req.body;
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.SoftDelete);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (soft_delete)', errors });
+    const { producto_id, estado } = req.body;
 
-    const data = await db.executeProc('productos_soft_delete', {
-      producto_id: { type: sql.Int, value: Number(B.producto_id) }
-    });
-    return res.status(200).json({ success:true, message:'Producto desactivado (soft delete)', data });
+    const { isValid, errors } = validar([
+      validarIdPositivo(producto_id, 'producto_id'),
+      validarEstado(estado),
+    ]);
+    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos', errors });
+
+    const params = BuildParams([
+      { name: 'producto_id', type: sql.Int, value: Number(producto_id) },
+      { name: 'estado',      type: sql.Bit, value: Number(estado) },
+    ]);
+
+    await db.executeProc('productos_set_state', params);
+
+    const msg = Number(estado) === 1 ? 'Producto activado' : 'Producto desactivado';
+    return res.status(200).json({ success: true, message: msg });
+
   } catch (err) {
-    console.error('productos_soft_delete error:', err);
-    return res.status(500).json({ success:false, message:'Error al desactivar el producto' });
+    return handleSqlError(err, res, 'Error al cambiar estado del producto');
   }
 });
 
-/* =========================== HARD DELETE (admin) ========================== */
-Router.post('/delete', requireAdmin, async (req, res) => {
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POST /add_stock   (auth requerido)
+//  ► Datos esperados : { caja_id: Number, producto_id: Number, cantidad: Number }
+//  ► SP llamado      : productos_add_stock(@caja_id, @producto_id, @cantidad)
+//  ► Retorna          : (ninguno — confirmación)
+//  NOTA: Si el producto ya existe en la caja, suma; si no, crea el detalle
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.post('/add_stock', requireAuth, async (req, res) => {
   try {
-    const B = req.body;
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.Delete);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (delete)', errors });
+    const { caja_id, producto_id, cantidad } = req.body;
 
-    const params = {
-      producto_id: { type: sql.Int, value: Number(B.producto_id) },
-      force: { type: sql.Bit, value: B.force ? 1 : 0 }
-    };
-    const data = await db.executeProc('productos_delete', params);
-    return res.status(200).json({ success:true, message:'Producto eliminado', data });
+    const { isValid, errors } = validar([
+      validarIdPositivo(caja_id, 'caja_id'),
+      validarIdPositivo(producto_id, 'producto_id'),
+      validarIdPositivo(cantidad, 'cantidad'),
+    ]);
+    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos', errors });
+
+    const params = BuildParams([
+      { name: 'caja_id',     type: sql.Int, value: Number(caja_id) },
+      { name: 'producto_id', type: sql.Int, value: Number(producto_id) },
+      { name: 'cantidad',    type: sql.Int, value: Number(cantidad) },
+    ]);
+
+    await db.executeProc('productos_add_stock', params);
+    return res.status(200).json({ success: true, message: `Se agregaron ${cantidad} unidades al stock` });
+
   } catch (err) {
-    console.error('productos_delete error:', err);
-    return res.status(500).json({ success:false, message:'Error al eliminar el producto' });
+    return handleSqlError(err, res, 'Error al agregar stock');
   }
 });
 
-/* ================================ READS ================================== */
-Router.get('/get_all', async (_req, res) => {
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POST /remove_stock   (auth requerido)
+//  ► Datos esperados : { caja_id: Number, producto_id: Number, cantidad: Number }
+//  ► SP llamado      : productos_remove_stock(@caja_id, @producto_id, @cantidad)
+//  ► Retorna          : (ninguno — confirmación)
+//  NOTA: Si el stock llega a 0, el SP elimina el registro de cajas_detalles
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.post('/remove_stock', requireAuth, async (req, res) => {
+  try {
+    const { caja_id, producto_id, cantidad } = req.body;
+
+    const { isValid, errors } = validar([
+      validarIdPositivo(caja_id, 'caja_id'),
+      validarIdPositivo(producto_id, 'producto_id'),
+      validarIdPositivo(cantidad, 'cantidad'),
+    ]);
+    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos', errors });
+
+    const params = BuildParams([
+      { name: 'caja_id',     type: sql.Int, value: Number(caja_id) },
+      { name: 'producto_id', type: sql.Int, value: Number(producto_id) },
+      { name: 'cantidad',    type: sql.Int, value: Number(cantidad) },
+    ]);
+
+    await db.executeProc('productos_remove_stock', params);
+    return res.status(200).json({ success: true, message: `Se retiraron ${cantidad} unidades del stock` });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al retirar stock');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POST /set_stock   (auth requerido)
+//  ► Datos esperados : { caja_id: Number, producto_id: Number, cantidad: Number }
+//  ► SP llamado      : productos_set_stock(@caja_id, @producto_id, @cantidad)
+//  ► Retorna          : (ninguno — confirmación)
+//  NOTA: Sobrescribe el stock actual (upsert)
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.post('/set_stock', requireAuth, async (req, res) => {
+  try {
+    const { caja_id, producto_id, cantidad } = req.body;
+
+    const { isValid, errors } = validar([
+      validarIdPositivo(caja_id, 'caja_id'),
+      validarIdPositivo(producto_id, 'producto_id'),
+      validarCantidad(cantidad, 'cantidad'),
+    ]);
+    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos', errors });
+
+    const params = BuildParams([
+      { name: 'caja_id',     type: sql.Int, value: Number(caja_id) },
+      { name: 'producto_id', type: sql.Int, value: Number(producto_id) },
+      { name: 'cantidad',    type: sql.Int, value: Number(cantidad) },
+    ]);
+
+    await db.executeProc('productos_set_stock', params);
+    return res.status(200).json({ success: true, message: `Stock establecido a ${cantidad} unidades` });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al establecer stock');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /get_all
+//  ► Datos esperados : (ninguno)
+//  ► SP llamado      : productos_get_all()
+//  ► Retorna          : [{ producto completo + stock_total }]
+//  NOTA: Incluye activos e inactivos (para admin)
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/get_all', async (_req, res) => {
   try {
     const data = await db.executeProc('productos_get_all', {});
-    return res.status(200).json({ success:true, message:'Listado de productos', data });
-  } catch (err) {
-    console.error('productos_get_all error:', err);
-    return res.status(500).json({ success:false, message:'Error al listar productos' });
-  }
-});
-
-Router.get('/get_all_active', async (_req, res) => {
-  try {
-    const data = await db.executeProc('productos_get_all_active', {});
-    return res.status(200).json({ success:true, message:'Listado de productos activos', data });
-  } catch (err) {
-    console.error('productos_get_all_active error:', err);
-    return res.status(500).json({ success:false, message:'Error al listar productos activos' });
-  }
-});
-
-Router.get('/get_list', async (_req, res) => {
-  try {
-    const data = await db.executeProc('productos_get_list', {});
-    return res.status(200).json({ success:true, message:'Listado simple de productos', data });
-  } catch (err) {
-    console.error('productos_get_list error:', err);
-    return res.status(500).json({ success:false, message:'Error al listar productos (simple)' });
-  }
-});
-
-Router.get('/por_id/:producto_id', async (req, res) => {
-  try {
-    const B = { producto_id: Number(req.params.producto_id) };
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.PorId);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (por_id)', errors });
-
-    const data = await db.executeProc('productos_get_by_id', {
-      producto_id: { type: sql.Int, value: B.producto_id }
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Productos listados' : 'Sin productos registrados',
+      data,
     });
-    if (!data?.length) return res.status(404).json({ success:false, message:'Producto no encontrado' });
-    return res.status(200).json({ success:true, message:'Producto obtenido', data: data[0] });
   } catch (err) {
-    console.error('productos_get_by_id error:', err);
-    return res.status(500).json({ success:false, message:'Error al obtener el producto' });
+    return handleSqlError(err, res, 'Error al listar productos');
   }
 });
 
-Router.get('/por_categoria/:categoria_principal_id', async (req, res) => {
-  try {
-    const B = { categoria_principal_id: Number(req.params.categoria_principal_id) };
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.ByCategoria);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (por_categoria)', errors });
 
-    const data = await db.executeProc('productos_get_list_by_category_id', {
-      categoria_principal_id: { type: sql.Int, value: B.categoria_principal_id }
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /without_stock
+//  ► Datos esperados : (ninguno)
+//  ► SP llamado      : productos_get_without_stock()
+//  ► Retorna          : [{ producto sin stock }]  (solo activos — para user view)
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/without_stock', async (_req, res) => {
+  try {
+    const data = await db.executeProc('productos_get_without_stock', {});
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Productos activos listados' : 'Sin productos activos',
+      data,
     });
-    return res.status(200).json({ success:true, message:'Productos por categoría', data });
   } catch (err) {
-    console.error('productos_get_list_by_category_id error:', err);
-    return res.status(500).json({ success:false, message:'Error al obtener productos por categoría' });
+    return handleSqlError(err, res, 'Error al listar productos activos');
   }
 });
 
-Router.get('/por_caja/:caja_id', async (req, res) => {
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /por_id/:producto_id
+//  ► Datos esperados : producto_id (param URL)
+//  ► SP llamado      : productos_get_by_id(@producto_id)
+//  ► Retorna          : { producto completo + stock_total }
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/por_id/:producto_id', async (req, res) => {
   try {
-    const B = { caja_id: Number(req.params.caja_id) };
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.ByCaja);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (por_caja)', errors });
+    const error = validarIdPositivo(req.params.producto_id, 'producto_id');
+    if (error) return res.status(400).json({ success: false, message: error });
 
-    const data = await db.executeProc('productos_get_by_caja_id', {
-      caja_id: { type: sql.Int, value: B.caja_id }
-    });
-    return res.status(200).json({ success:true, message:'Productos por caja', data });
-  } catch (err) {
-    console.error('productos_get_by_caja_id error:', err);
-    return res.status(500).json({ success:false, message:'Error al obtener productos por caja' });
-  }
-});
+    const params = BuildParams([
+      { name: 'producto_id', type: sql.Int, value: Number(req.params.producto_id) },
+    ]);
 
-Router.get('/buscar_por_nombre/:search_term', async (req, res) => {
-  try {
-    const B = { search_term: String(req.params.search_term) };
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.SearchNombre);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (buscar_por_nombre)', errors });
-
-    const data = await db.executeProc('productos_search_by_nombre', {
-      search_term: { type: sql.NVarChar(100), value: B.search_term }
-    });
-    return res.status(200).json({ success:true, message:'Búsqueda por nombre', data });
-  } catch (err) {
-    console.error('productos_search_by_nombre error:', err);
-    return res.status(500).json({ success:false, message:'Error en la búsqueda por nombre' });
-  }
-});
-
-Router.get('/buscar_por_precio', async (req, res) => {
-  try {
-    // /buscar_por_precio?min=10&max=100
-    const precio_min = req.query.min != null ? Number(req.query.min) : null;
-    const precio_max = req.query.max != null ? Number(req.query.max) : null;
-    const B = { precio_min, precio_max };
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.SearchPrecio);
-    if (!isValid) return res.status(400).json({ success:false, message:'Datos inválidos (buscar_por_precio)', errors });
-
-    const data = await db.executeProc('productos_search_by_price_range', {
-      precio_min: { type: sql.Decimal(10,2), value: precio_min },
-      precio_max: { type: sql.Decimal(10,2), value: precio_max }
-    });
-    return res.status(200).json({ success:true, message:'Búsqueda por rango de precio', data });
-  } catch (err) {
-    console.error('productos_search_by_price_range error:', err);
-    return res.status(500).json({ success:false, message:'Error en la búsqueda por precio' });
-  }
-});
-
-Router.get('/por_cajas', async (_req, res) => {
-  try {
-    const data = await db.executeProc('productos_get_by_cajas', {});
-    return res.status(200).json({ success:true, message:'Productos por cajas (resumen)', data });
-  } catch (err) {
-    console.error('productos_get_by_cajas error:', err);
-    return res.status(500).json({ success:false, message:'Error al obtener productos por cajas' });
-  }
-});
-
-Router.post('/set_precio', requireAuth, async (req, res) => {
-  try {
-    const B = req.body;
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.SetPrecio);
-    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos (set_precio)', errors });
-
-    const data = await db.executeProc('productos_set_precio', {
-      producto_id: { type: sql.Int, value: Number(B.producto_id) },
-      precio: { type: sql.Decimal(10, 2), value: Number(B.precio) }
-    });
-    
-    return res.status(200).json({ success: true, message: 'Precio actualizado', data });
-  } catch (err) {
-    console.error('productos_set_precio error:', err);
-    return res.status(500).json({ success: false, message: 'Error al actualizar el precio' });
-  }
-});
-
-/* GET DETALLE COMPLETO (public) */
-Router.get('/detalle_completo/:producto_id', async (req, res) => {
-  try {
-    const B = { producto_id: Number(req.params.producto_id) };
-    const { isValid, errors } = await ValidationService.validateData(B, Rules.PorId);
-    if (!isValid) return res.status(400).json({ success: false, message: 'Datos inválidos (detalle_completo)', errors });
-
-    const data = await db.executeProc('productos_get_detalle_completo', {
-      producto_id: { type: sql.Int, value: B.producto_id }
-    });
-
+    const data = await db.executeProc('productos_get_by_id', params);
     if (!data.length) return res.status(404).json({ success: false, message: 'Producto no encontrado' });
-    return res.status(200).json({ success: true, message: 'Detalle completo obtenido', data: data[0] });
+
+    return res.status(200).json({ success: true, message: 'Producto obtenido', data: data[0] });
+
   } catch (err) {
-    console.error('productos_get_detalle_completo error:', err);
-    return res.status(500).json({ success: false, message: 'Error al obtener el detalle completo' });
+    return handleSqlError(err, res, 'Error al obtener el producto');
   }
 });
 
-module.exports = Router;
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /por_nombre/:nombre
+//  ► Datos esperados : nombre (param URL, búsqueda LIKE)
+//  ► SP llamado      : productos_get_by_nombre(@nombre)
+//  ► Retorna          : [{ producto + stock_total }]
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/por_nombre/:nombre', async (req, res) => {
+  try {
+    const nombre = decodeURIComponent(req.params.nombre).trim();
+    if (!nombre) return res.status(400).json({ success: false, message: 'El nombre es obligatorio.' });
+
+    const params = BuildParams([
+      { name: 'nombre', type: sql.NVarChar(100), value: nombre },
+    ]);
+
+    const data = await db.executeProc('productos_get_by_nombre', params);
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Productos encontrados' : 'No se encontraron productos',
+      data,
+    });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al buscar por nombre');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /por_categoria/:categoria_id
+//  ► Datos esperados : categoria_id (param URL)
+//  ► SP llamado      : productos_get_by_categoria(@categoria_id)
+//  ► Retorna          : [{ producto + stock_total }]
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/por_categoria/:categoria_id', async (req, res) => {
+  try {
+    const error = validarIdPositivo(req.params.categoria_id, 'categoria_id');
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const params = BuildParams([
+      { name: 'categoria_id', type: sql.Int, value: Number(req.params.categoria_id) },
+    ]);
+
+    const data = await db.executeProc('productos_get_by_categoria', params);
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Productos encontrados' : 'Sin productos en esta categoría',
+      data,
+    });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al buscar por categoría');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /por_marca/:marca_id
+//  ► Datos esperados : marca_id (param URL)
+//  ► SP llamado      : productos_get_by_marca(@marca_id)
+//  ► Retorna          : [{ producto + stock_total }]
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/por_marca/:marca_id', async (req, res) => {
+  try {
+    const error = validarIdPositivo(req.params.marca_id, 'marca_id');
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const params = BuildParams([
+      { name: 'marca_id', type: sql.Int, value: Number(req.params.marca_id) },
+    ]);
+
+    const data = await db.executeProc('productos_get_by_marca', params);
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Productos encontrados' : 'Sin productos de esta marca',
+      data,
+    });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al buscar por marca');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /por_unidad/:unidad_id
+//  ► Datos esperados : unidad_id (param URL)
+//  ► SP llamado      : productos_get_by_unidad(@unidad_id)
+//  ► Retorna          : [{ producto + stock_total }]
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/por_unidad/:unidad_id', async (req, res) => {
+  try {
+    const error = validarIdPositivo(req.params.unidad_id, 'unidad_id');
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const params = BuildParams([
+      { name: 'unidad_id', type: sql.Int, value: Number(req.params.unidad_id) },
+    ]);
+
+    const data = await db.executeProc('productos_get_by_unidad', params);
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Productos encontrados' : 'Sin productos con esta unidad',
+      data,
+    });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al buscar por unidad');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /detalle_caja/:producto_id
+//  ► Datos esperados : producto_id (param URL)
+//  ► SP llamado      : productos_get_detalle_por_caja(@producto_id)
+//  ► Retorna          : [{ producto_id, nombre, marca, precio, caja_ubicacion, stock }]
+//  NOTA: Este es el que alimenta las BOX CARDS — un row por cada caja donde
+//        el producto tiene stock
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/detalle_caja/:producto_id', async (req, res) => {
+  try {
+    const error = validarIdPositivo(req.params.producto_id, 'producto_id');
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const params = BuildParams([
+      { name: 'producto_id', type: sql.Int, value: Number(req.params.producto_id) },
+    ]);
+
+    const data = await db.executeProc('productos_get_detalle_por_caja', params);
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Detalle por caja obtenido' : 'El producto no tiene stock en ninguna caja',
+      data,
+    });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al obtener detalle por caja');
+  }
+});
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GET /count_by_caja/:caja_id?
+//  ► Datos esperados : caja_id (param URL, opcional — si se omite, todas las cajas)
+//  ► SP llamado      : productos_get_count_by_caja_id(@caja_id)
+//  ► Retorna          : [{ caja_id, etiqueta, cantidad_productos }]
+// ═════════════════════════════════════════════════════════════════════════════
+ProductosRouter.get('/count_by_caja/:caja_id?', async (req, res) => {
+  try {
+    const cajaId = req.params.caja_id ? Number(req.params.caja_id) : null;
+
+    if (cajaId !== null) {
+      const error = validarIdPositivo(cajaId, 'caja_id');
+      if (error) return res.status(400).json({ success: false, message: error });
+    }
+
+    const params = BuildParams([
+      { name: 'caja_id', type: sql.Int, value: cajaId },
+    ]);
+
+    const data = await db.executeProc('productos_get_count_by_caja_id', params);
+    return res.status(200).json({
+      success: true,
+      message: data.length ? 'Conteo obtenido' : 'Sin datos',
+      data,
+    });
+
+  } catch (err) {
+    return handleSqlError(err, res, 'Error al obtener conteo por caja');
+  }
+});
+
+
+module.exports = ProductosRouter;

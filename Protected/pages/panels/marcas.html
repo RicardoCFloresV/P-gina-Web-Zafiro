@@ -3,169 +3,226 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel de Administración - Marcas</title>
+  <title>Zafiro Home - Gestión de Marcas</title>
 
-  <!-- Iconos y fuentes -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@700&display=swap" rel="stylesheet" />
-
-  <!-- DataTables -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
 
-  <!-- Estilos propios -->
-  <link rel="stylesheet" href="/admin-resources/css/admin.css" />
-
-  <!-- Toast styles livianos -->
-  <style>
-    #toastContainer { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
-    .toast { min-width: 260px; max-width: 420px; padding: 12px 14px; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.12);
-             font-family: "Open Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; font-size: 14px; line-height: 1.35;
-             display: flex; align-items: center; gap: 8px; animation: slidein .2s ease-out; }
-    .toast i { opacity: .9; }
-    .toast-success { background: #e7f6ec; color: #145a32; }
-    .toast-error   { background: #fdecea; color: #7a2e2e; }
-    .toast-info    { background: #eef2ff; color: #1f3a8a; }
-    @keyframes slidein { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'rgb(45, 71, 120)', 'primary-dark': 'rgb(30, 48, 82)',
+            secondary: 'rgb(100, 140, 188)', accent: '#f08a5d', 'accent-dark': '#d87245',
+            danger: '#a5230c', success: '#16a34a',
+            bg: '#f6f7fb', card: '#ffffff', textMain: '#333333', textMuted: '#737b90',
+          },
+          fontFamily: { body: ['Open Sans', 'sans-serif'], heading: ['Poppins', 'sans-serif'] },
+          boxShadow: { 'custom': '0 4px 12px rgba(45, 71, 120, 0.35)', 'custom-hover': '0 10px 20px rgba(45, 71, 120, 0.1)' }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/Protected/css/dashboards.css" />
 </head>
-<body class="page-body">
-  <div class="top-banner">Panel de Administración - Marcas</div>
+<body class="font-body bg-bg text-textMain overflow-x-hidden">
 
-  <nav class="navbar">
-    <div class="navbarcontainer">
-      <a class="navbar-store-title" href="#">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Zafiro Home" height="40" class="navbar-logo me-2">
-        <span>Zafiro Home</span>
-      </a>
-      <a class="btn" href="/admin-resources/pages/admin.html">Regresar al panel general</a>
+  <div class="flex min-h-screen w-full relative">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[990] hidden lg:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[1000] w-[260px] bg-primary text-white flex flex-col transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
+      <div class="h-[70px] flex items-center px-6 gap-4 bg-primary-dark shrink-0">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Logo" class="w-10 h-10 rounded-full object-cover">
+        <span class="font-heading font-bold text-lg">Zafiro Home</span>
+      </div>
+
+      <div class="block lg:hidden p-6 bg-black/15 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover">
+          <div>
+            <div class="font-bold text-sm text-white">Admin Zafiro</div>
+            <div class="text-xs text-white/60">Super Administrador</div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-none py-4 flex-1 overflow-y-auto">
+        <li>
+          <a href="/Protected/pages/admin.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4">
+            <i class="fa-solid fa-home w-5 text-center"></i> Inicio
+          </a>
+        </li>
+
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Módulos</li>
+
+        <li>
+          <a href="/Protected/pages/panels/productos.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-search w-5 text-center"></i> Productos
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/categorias.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-layer-group w-5 text-center"></i> Categorías
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/marcas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-tags w-5 text-center"></i> Marcas
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/cajas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-box w-5 text-center"></i> Cajas
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/unidades.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-ruler w-5 text-center"></i> Unidades
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/presentaciones.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-cubes w-5 text-center"></i> Presentaciones
+          </a>
+        </li>
+
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Administración</li>
+
+        <li>
+          <a href="/Protected/pages/panels/usuarios.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-users w-5 text-center"></i> Usuarios
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:ml-[260px]">
+      <header class="h-[70px] bg-card flex items-center justify-between px-4 sm:px-8 shadow-sm sticky top-0 z-[900]">
+        <button id="menu-toggle" class="lg:hidden text-primary text-2xl p-2 focus:outline-none"><i class="fa-solid fa-bars"></i></button>
+        <div class="hidden sm:flex items-center gap-6 ml-auto">
+          <div class="flex items-center gap-4">
+            <a href="#" class="text-primary font-semibold flex items-center gap-2 hover:text-accent transition-colors"><i class="fa-solid fa-home"></i> Inicio</a>
+            <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover shadow-sm">
+            <div class="flex flex-col"><span class="font-bold text-sm leading-tight text-textMain">Admin Zafiro</span><span class="text-xs text-textMuted">Super Administrador</span></div>
+          </div>
+          <button id="logout-btn" class="bg-danger text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-red-800 transition-colors flex items-center gap-2"><i class="fa-solid fa-sign-out-alt"></i> Salir</button>
+        </div>
+        <button class="sm:hidden bg-danger text-white px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-red-800 transition-colors ml-auto"><i class="fa-solid fa-sign-out-alt"></i></button>
+      </header>
+
+      <main class="p-4 sm:p-8 flex-1">
+        <section class="bg-primary text-white rounded-xl p-6 sm:p-8 shadow-custom mb-6">
+          <h1 class="font-heading text-2xl sm:text-3xl font-bold mb-2">Gestión de Marcas</h1>
+          <p class="text-blue-200 text-sm sm:text-base">Módulo para la administración de las marcas de los productos registrados en el sistema.</p>
+        </section>
+
+        <section class="bg-card rounded-xl p-5 sm:p-6 shadow-custom mb-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 class="font-heading text-xl font-bold text-primary m-0">Lista de Marcas</h2>
+            <div class="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto">
+              <button id="btnBuscarMarca" class="bg-secondary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 shadow-sm" title="Buscar marca">
+                <i class="fa-solid fa-magnifying-glass"></i> <span class="hidden sm:inline">Buscar</span>
+              </button>
+              <button id="btnCargarRegistros" class="flex-1 md:flex-none bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-cloud-arrow-down"></i> <span class="hidden sm:inline">Cargar todos los registros</span><span class="sm:hidden">Cargar</span>
+              </button>
+              <button id="btnAnadirMarca" class="flex-1 md:flex-none bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir marca</span><span class="sm:hidden">Añadir</span>
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto w-full">
+            <table id="tablaMarcas" class="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="py-3 px-4 text-textMuted font-semibold">Id</th>
+                  <th class="py-3 px-4 text-textMuted font-semibold">Nombre</th>
+                  <th class="py-3 px-4 text-textMuted font-semibold text-center">Estado</th>
+                  <th class="py-3 px-4 text-textMuted font-semibold text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaMarcasBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
     </div>
-  </nav>
+  </div>
 
-  <main class="main-content">
-    <section class="card scroll-reveal" id="admin-header">
-      <h1 class="admin-title">Panel: Marcas</h1>
-      <p class="admin-subtitle">Administra las marcas de productos disponibles en el sistema.</p>
-    </section>
-
-    <!-- Búsqueda por ID -->
-    <section class="card p-3 mb-4 shadow-sm scroll-reveal">
-      <div class="card-head">
-        <h2 class="mb-3">Búsqueda por ID</h2>
-        <div class="actions">
-          <div class="input-group">
-            <input type="number" id="inputBuscarId" class="form-control" placeholder="ID…" min="1" />
-            <button id="btnBuscarId" class="btn btn-ghost">
-              <i class="fa-solid fa-magnifying-glass me-1"></i> Obtener por ID
-            </button>
-          </div>
+  <!-- MODAL: Añadir / Modificar Marca -->
+  <div id="modalMarca" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50" id="modalMarcaBackdrop"></div>
+    <div id="modalMarcaContent" class="bg-card rounded-xl w-[95%] max-w-[450px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
+      <div class="flex justify-between items-center mb-6">
+        <h3 id="modalTitle" class="font-heading text-xl font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-tags"></i> Añadir Nueva Marca</h3>
+        <button class="btn-close-marca text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formMarca" class="flex flex-col gap-4">
+        <input type="hidden" id="modalMarcaId" value="">
+        <div class="flex flex-col gap-2">
+          <label for="modalNombre" class="font-semibold text-textMain text-sm">Nombre <span class="text-danger">*</span></label>
+          <input type="text" id="modalNombre" required placeholder="Ej. Samsung, Truper, etc." class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
         </div>
-      </div>
-      <div class="table-responsive mt-3">
-        <table id="tablaPorId" class="display table table-hover w-100">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="2" class="text-muted">Ingresa un ID y presiona "Obtener por ID".</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Listado general -->
-    <section class="card p-3 mb-5 shadow-sm scroll-reveal">
-      <div class="card-head">
-        <h2 class="mb-3">Listado de Marcas</h2>
-        <div class="actions">
-          <button id="btnRefrescar" class="btn btn-outline-info">
-            <i class="fa-solid fa-rotate me-1"></i> Refrescar
-          </button>
-          <button id="btnAbrirAgregar" class="btn btn-success">
-            <i class="fa-solid fa-plus me-1"></i> Agregar
-          </button>
+        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+          <button type="button" class="btn-close-marca px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto text-center">Cancelar</button>
+          <button type="submit" id="btnAccionModal" class="px-5 py-2.5 rounded-md font-semibold bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"><i class="fa-solid fa-check"></i> Agregar</button>
         </div>
-      </div>
+      </form>
+    </div>
+  </div>
 
-      <div class="table-responsive">
-        <table id="tablaGeneral" class="display table table-hover w-100">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="3" class="text-muted">Los registros se cargarán aquí…</td></tr>
-          </tbody>
-        </table>
+  <!-- MODAL: Buscar Marca -->
+  <div id="modalBuscarMarca" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50" id="modalBuscarMarcaBackdrop"></div>
+    <div id="modalBuscarMarcaContent" class="bg-card rounded-xl w-[95%] max-w-[450px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-heading text-xl font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-magnifying-glass"></i> Buscar Marca</h3>
+        <button class="btn-close-buscar text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <small class="text-muted">Tip: usa "Modificar" para actualizar y "Eliminar" para borrar un registro.</small>
-    </section>
-  </main>
+      <form id="formBuscarMarca" class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="searchMarcaId" class="font-semibold text-textMain text-sm">Id</label>
+          <input type="number" id="searchMarcaId" min="1" placeholder="Ej. 5" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+        </div>
+        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+          <button type="button" class="btn-close-buscar px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto text-center">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-md font-semibold bg-secondary text-white hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"><i class="fa-solid fa-search"></i> Buscar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-  <footer>
-    <p>© 2025 Zafiro Home. Todos los derechos reservados.</p>
-  </footer>
-
-  <!-- Modal (Agregar / Modificar) -->
-  <div class="modal" id="modalEdit" aria-hidden="true" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-header">
-        <h3 class="modal-title" id="modalTitle">Nueva Marca</h3>
-        <button class="btn-close" id="closeModalBtn" aria-label="Cerrar">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form id="editForm" novalidate>
-          <input type="hidden" id="hidId" name="hidId" />
-          <div class="mb-3">
-            <label for="nombre" class="form-label">Nombre</label>
-            <input type="text" id="nombre" class="form-control" maxlength="50" required />
-            <small class="text-muted">2-50 caracteres. Letras, números, espacios y . - &</small>
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" id="cancelModalBtn">Cancelar</button>
-            <button type="submit" class="btn btn-primary" id="saveBtn">Guardar</button>
-          </div>
-        </form>
+  <!-- MODAL: Confirmar Desactivación -->
+  <div id="modalConfirmDelete" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50 btn-cancelar-delete"></div>
+    <div class="bg-card rounded-xl w-[90%] max-w-[400px] p-6 sm:p-8 text-center relative z-10 transform translate-y-[-20px] transition-transform duration-300 delete-content shadow-custom-hover">
+      <div class="text-danger text-5xl mb-4"><i class="fa-regular fa-circle-xmark"></i></div>
+      <h3 class="font-heading text-xl font-bold text-textMain mb-2">Confirmar Desactivación</h3>
+      <p class="text-textMuted mb-2 text-sm">¿Estás seguro de que deseas desactivar esta marca?</p>
+      <p id="deleteNombreInfo" class="text-primary font-semibold mb-2 text-sm"></p>
+      <p class="text-textMuted mb-6 text-xs">(Si tiene productos asignados, la operación será rechazada.)</p>
+      <input type="hidden" id="deleteMarcaId" value="">
+      <div class="flex flex-col sm:flex-row justify-center gap-3">
+        <button type="button" class="btn-cancelar-delete px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full">Cancelar</button>
+        <button type="button" id="btnConfirmarDelete" class="px-5 py-2.5 rounded-md font-semibold bg-danger text-white hover:bg-red-800 transition-colors w-full">Desactivar</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal confirmación de eliminación -->
-  <div class="modal" id="modalConfirmDelete" aria-hidden="true" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminación</h3>
-        <button class="btn-close" id="closeDeleteModalBtn" aria-label="Cerrar">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p id="deleteMessage" class="mb-3">¿Seguro que deseas eliminar esta marca?</p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">Cancelar</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-            <i class="fa-solid fa-trash-can me-1"></i> Eliminar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div id="toastContainer" aria-live="polite" aria-atomic="true" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 max-w-[90vw] sm:max-w-sm"></div>
 
-  <!-- Toast container -->
-  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
-
-  <!-- jQuery + DataTables base -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-
-  <!-- Control del panel -->
-  <script type="module" src="/admin-resources/scripts/control/panel-adm-marcas.js"></script>
+  <script type="module" src="/Protected/scripts/control/marcasDashboard.js"></script>
 </body>
 </html>

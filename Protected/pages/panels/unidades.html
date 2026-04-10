@@ -3,58 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Zafiro Home - Gestión de Categorías</title>
+  <title>Zafiro Home - Gestión de Unidades</title>
 
-  <!-- Fuentes -->
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
-
-  <!-- Iconos FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-
-  <!-- DataTables CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
 
-  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            primary: 'rgb(45, 71, 120)',
-            'primary-dark': 'rgb(30, 48, 82)',
-            secondary: 'rgb(100, 140, 188)',
-            accent: '#f08a5d',
-            'accent-dark': '#d87245',
-            danger: '#a5230c',
-            success: '#16a34a',
-            bg: '#f6f7fb',
-            card: '#ffffff',
-            textMain: '#333333',
-            textMuted: '#737b90',
+            primary: 'rgb(45, 71, 120)', 'primary-dark': 'rgb(30, 48, 82)',
+            secondary: 'rgb(100, 140, 188)', accent: '#f08a5d', 'accent-dark': '#d87245',
+            danger: '#a5230c', success: '#16a34a',
+            bg: '#f6f7fb', card: '#ffffff', textMain: '#333333', textMuted: '#737b90',
           },
-          fontFamily: {
-            body: ['Open Sans', 'sans-serif'],
-            heading: ['Poppins', 'sans-serif'],
-          },
-          boxShadow: {
-            'custom': '0 4px 12px rgba(45, 71, 120, 0.35)',
-            'custom-hover': '0 10px 20px rgba(45, 71, 120, 0.1)',
-          }
+          fontFamily: { body: ['Open Sans', 'sans-serif'], heading: ['Poppins', 'sans-serif'] },
+          boxShadow: { 'custom': '0 4px 12px rgba(45, 71, 120, 0.35)', 'custom-hover': '0 10px 20px rgba(45, 71, 120, 0.1)' }
         }
       }
     }
   </script>
-
-  <!-- Estilos del dashboard (DataTables overrides, toggles) -->
   <link rel="stylesheet" href="/Protected/css/dashboards.css" />
 </head>
 <body class="font-body bg-bg text-textMain overflow-x-hidden">
 
   <div class="flex min-h-screen w-full relative">
-
-    <!-- Sidebar Overlay (Móvil) -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[990] hidden lg:hidden"></div>
 
     <!-- Sidebar -->
@@ -131,173 +107,115 @@
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:ml-[260px]">
-
-      <!-- Topbar -->
       <header class="h-[70px] bg-card flex items-center justify-between px-4 sm:px-8 shadow-sm sticky top-0 z-[900]">
         <button id="menu-toggle" class="lg:hidden text-primary text-2xl p-2 focus:outline-none"><i class="fa-solid fa-bars"></i></button>
         <div class="hidden sm:flex items-center gap-6 ml-auto">
           <div class="flex items-center gap-4">
             <a href="#" class="text-primary font-semibold flex items-center gap-2 hover:text-accent transition-colors"><i class="fa-solid fa-home"></i> Inicio</a>
             <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover shadow-sm">
-            <div class="flex flex-col">
-              <span class="font-bold text-sm leading-tight text-textMain">Admin Zafiro</span>
-              <span class="text-xs text-textMuted">Super Administrador</span>
-            </div>
+            <div class="flex flex-col"><span class="font-bold text-sm leading-tight text-textMain">Admin Zafiro</span><span class="text-xs text-textMuted">Super Administrador</span></div>
           </div>
           <button id="logout-btn" class="bg-danger text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-red-800 transition-colors flex items-center gap-2"><i class="fa-solid fa-sign-out-alt"></i> Salir</button>
         </div>
         <button class="sm:hidden bg-danger text-white px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-red-800 transition-colors ml-auto"><i class="fa-solid fa-sign-out-alt"></i></button>
       </header>
 
-      <!-- Dashboard Body -->
       <main class="p-4 sm:p-8 flex-1">
-
-        <!-- Module Title Card -->
         <section class="bg-primary text-white rounded-xl p-6 sm:p-8 shadow-custom mb-6">
-          <h1 class="font-heading text-2xl sm:text-3xl font-bold mb-2">Gestión de Categorías</h1>
-          <p class="text-blue-200 text-sm sm:text-base">Módulo para la administración de las agrupaciones de productos en el sistema.</p>
+          <h1 class="font-heading text-2xl sm:text-3xl font-bold mb-2">Gestión de Unidades</h1>
+          <p class="text-blue-200 text-sm sm:text-base">Módulo para la administración de las unidades de medida utilizadas en el sistema.</p>
         </section>
 
-        <!-- Gestionar Categorías Card -->
         <section class="bg-card rounded-xl p-5 sm:p-6 shadow-custom mb-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <h2 class="font-heading text-xl font-bold text-primary m-0">Lista de Categorías</h2>
+            <h2 class="font-heading text-xl font-bold text-primary m-0">Lista de Unidades</h2>
             <div class="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto">
-              <button id="btnAbrirBuscarCategoria" class="bg-secondary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 shadow-sm" title="Buscar categoría">
+              <button id="btnBuscarUnidad" class="bg-secondary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 shadow-sm" title="Buscar unidad">
                 <i class="fa-solid fa-magnifying-glass"></i> <span class="hidden sm:inline">Buscar</span>
               </button>
               <button id="btnCargarRegistros" class="flex-1 md:flex-none bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
                 <i class="fa-solid fa-cloud-arrow-down"></i> <span class="hidden sm:inline">Cargar todos los registros</span><span class="sm:hidden">Cargar</span>
               </button>
-              <button id="btnAnadirCategoria" class="flex-1 md:flex-none bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
-                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir categoría</span><span class="sm:hidden">Añadir</span>
+              <button id="btnAnadirUnidad" class="flex-1 md:flex-none bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir unidad</span><span class="sm:hidden">Añadir</span>
               </button>
             </div>
           </div>
-
           <div class="overflow-x-auto w-full">
-            <table id="tablaCategorias" class="w-full text-left border-collapse whitespace-nowrap">
+            <table id="tablaUnidades" class="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr class="border-b border-gray-200">
                   <th class="py-3 px-4 text-textMuted font-semibold">Id</th>
-                  <th class="py-3 px-4 text-textMuted font-semibold">Jerarquía</th>
                   <th class="py-3 px-4 text-textMuted font-semibold">Nombre</th>
-                  <th class="py-3 px-4 text-textMuted font-semibold">Categoría Padre</th>
                   <th class="py-3 px-4 text-textMuted font-semibold text-center">Estado</th>
                   <th class="py-3 px-4 text-textMuted font-semibold text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody id="tablaCategoriasBody"></tbody>
+              <tbody id="tablaUnidadesBody"></tbody>
             </table>
           </div>
         </section>
-
       </main>
     </div>
   </div>
 
-  <!-- ============================================================
-       MODAL: Añadir / Modificar Categoría
-       ============================================================ -->
-  <div id="modalCategoria" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
-    <div class="absolute inset-0 bg-black/50" id="modalCategoriaBackdrop"></div>
-    <div id="modalCategoriaContent" class="bg-card rounded-xl w-[95%] max-w-[500px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
+  <!-- MODAL: Añadir / Modificar Unidad -->
+  <div id="modalUnidad" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50" id="modalUnidadBackdrop"></div>
+    <div id="modalUnidadContent" class="bg-card rounded-xl w-[95%] max-w-[450px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
       <div class="flex justify-between items-center mb-6">
-        <h3 id="modalTitle" class="font-heading text-xl font-bold text-primary flex items-center gap-2">
-          <i class="fa-solid fa-layer-group"></i> Añadir Nueva Categoría
-        </h3>
-        <button class="btn-close-categoria text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
+        <h3 id="modalTitle" class="font-heading text-xl font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-ruler"></i> Añadir Nueva Unidad</h3>
+        <button class="btn-close-unidad text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <form id="formCategoria" class="flex flex-col gap-4">
-        <input type="hidden" id="modalCategoriaId" value="">
-
-        <!-- Jerarquía -->
-        <div class="flex flex-col gap-2">
-          <label for="modalJerarquia" class="font-semibold text-textMain text-sm">Jerarquía <span class="text-danger">*</span></label>
-          <select id="modalJerarquia" required class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
-            <option value="">Seleccione una jerarquía</option>
-            <option value="1">Categoría Principal</option>
-            <option value="2">Categoría Secundaria</option>
-            <option value="3">Subcategoría</option>
-          </select>
-        </div>
-
-        <!-- Categoría Padre (dinámico) -->
-        <div id="grupoPadre" class="flex-col gap-2 hidden">
-          <label for="modalPadreId" class="font-semibold text-textMain text-sm">Categoría Padre <span class="text-danger">*</span></label>
-          <select id="modalPadreId" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
-            <option value="">Seleccione la categoría padre</option>
-          </select>
-        </div>
-
-        <!-- Nombre -->
+      <form id="formUnidad" class="flex flex-col gap-4">
+        <input type="hidden" id="modalUnidadId" value="">
         <div class="flex flex-col gap-2">
           <label for="modalNombre" class="font-semibold text-textMain text-sm">Nombre <span class="text-danger">*</span></label>
-          <input type="text" id="modalNombre" required placeholder="Ej. Accesorios para el hogar" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+          <input type="text" id="modalNombre" required placeholder="Ej. Centímetro, Litro, Kilogramo..." class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
         </div>
-
         <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
-          <button type="button" class="btn-close-categoria px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto text-center">Cancelar</button>
-          <button type="submit" id="btnAccionModal" class="px-5 py-2.5 rounded-md font-semibold bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
-            <i class="fa-solid fa-check"></i> Agregar
-          </button>
+          <button type="button" class="btn-close-unidad px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto text-center">Cancelar</button>
+          <button type="submit" id="btnAccionModal" class="px-5 py-2.5 rounded-md font-semibold bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"><i class="fa-solid fa-check"></i> Agregar</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ============================================================
-       MODAL: Buscar Categoría
-       ============================================================ -->
-  <div id="modalBuscarCategoria" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
-    <div class="absolute inset-0 bg-black/50" id="modalBuscarBackdrop"></div>
-    <div id="modalBuscarContent" class="bg-card rounded-xl w-[95%] max-w-[520px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
+  <!-- MODAL: Buscar Unidad -->
+  <div id="modalBuscarUnidad" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50" id="modalBuscarUnidadBackdrop"></div>
+    <div id="modalBuscarUnidadContent" class="bg-card rounded-xl w-[95%] max-w-[450px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
       <div class="flex justify-between items-center mb-6">
-        <h3 class="font-heading text-xl font-bold text-primary flex items-center gap-2">
-          <i class="fa-solid fa-magnifying-glass"></i> Buscar Categoría
-        </h3>
+        <h3 class="font-heading text-xl font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-magnifying-glass"></i> Buscar Unidad</h3>
         <button class="btn-close-buscar text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <form id="formBuscarCategoria" class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <label for="searchJerarquia" class="font-semibold text-textMain text-sm">Jerarquía</label>
-          <select id="searchJerarquia" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
-            <option value="">Seleccione una jerarquía</option>
-            <option value="1">Categoría Principal</option>
-            <option value="2">Categoría Secundaria</option>
-            <option value="3">Subcategoría</option>
-          </select>
-        </div>
+      <form id="formBuscarUnidad" class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           <label for="searchId" class="font-semibold text-textMain text-sm">Id</label>
-          <input type="number" id="searchId" min="1" placeholder="Ej. 102" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+          <input type="number" id="searchId" min="1" placeholder="Ej. 5" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
         </div>
         <div class="flex flex-col gap-2">
           <label for="searchNombre" class="font-semibold text-textMain text-sm">Nombre</label>
-          <input type="text" id="searchNombre" placeholder="Ej. Accesorios para el hogar" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+          <input type="text" id="searchNombre" placeholder="Ej. Centímetro" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
         </div>
         <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
           <button type="button" class="btn-close-buscar px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto text-center">Cancelar</button>
-          <button type="submit" class="px-5 py-2.5 rounded-md font-semibold bg-secondary text-white hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
-            <i class="fa-solid fa-search"></i> Buscar
-          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-md font-semibold bg-secondary text-white hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"><i class="fa-solid fa-search"></i> Buscar</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ============================================================
-       MODAL: Confirmar Desactivación
-       ============================================================ -->
+  <!-- MODAL: Confirmar Desactivación -->
   <div id="modalConfirmDelete" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
     <div class="absolute inset-0 bg-black/50 btn-cancelar-delete"></div>
     <div class="bg-card rounded-xl w-[90%] max-w-[400px] p-6 sm:p-8 text-center relative z-10 transform translate-y-[-20px] transition-transform duration-300 delete-content shadow-custom-hover">
       <div class="text-danger text-5xl mb-4"><i class="fa-regular fa-circle-xmark"></i></div>
       <h3 class="font-heading text-xl font-bold text-textMain mb-2">Confirmar Desactivación</h3>
-      <p id="deleteMessage" class="text-textMuted mb-2 text-sm">¿Estás seguro de que deseas desactivar esta categoría?</p>
+      <p class="text-textMuted mb-2 text-sm">¿Estás seguro de que deseas desactivar esta unidad?</p>
       <p id="deleteNombreInfo" class="text-primary font-semibold mb-2 text-sm"></p>
-      <p class="text-textMuted mb-6 text-xs">(Si tiene subcategorías activas o productos asignados, la operación será rechazada.)</p>
-      <input type="hidden" id="deleteCategoriaId" value="">
+      <p class="text-textMuted mb-6 text-xs">(Si tiene productos asignados, la operación será rechazada.)</p>
+      <input type="hidden" id="deleteUnidadId" value="">
       <div class="flex flex-col sm:flex-row justify-center gap-3">
         <button type="button" class="btn-cancelar-delete px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full">Cancelar</button>
         <button type="button" id="btnConfirmarDelete" class="px-5 py-2.5 rounded-md font-semibold bg-danger text-white hover:bg-red-800 transition-colors w-full">Desactivar</button>
@@ -305,12 +223,10 @@
     </div>
   </div>
 
-  <!-- Toast Container -->
   <div id="toastContainer" aria-live="polite" aria-atomic="true" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 max-w-[90vw] sm:max-w-sm"></div>
 
-  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-  <script type="module" src="/Protected/scripts/control/categoriasDashboard.js"></script>
+  <script type="module" src="/Protected/scripts/control/unidadesDashboard.js"></script>
 </body>
 </html>

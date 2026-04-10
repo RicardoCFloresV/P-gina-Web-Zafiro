@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zafiro Home - Gestión de Presentaciones</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'rgb(45, 71, 120)', 'primary-dark': 'rgb(30, 48, 82)',
+            secondary: 'rgb(100, 140, 188)', accent: '#f08a5d', 'accent-dark': '#d87245',
+            danger: '#a5230c', success: '#16a34a',
+            bg: '#f6f7fb', card: '#ffffff', textMain: '#333333', textMuted: '#737b90',
+          },
+          fontFamily: { body: ['Open Sans', 'sans-serif'], heading: ['Poppins', 'sans-serif'] },
+          boxShadow: { 'custom': '0 4px 12px rgba(45, 71, 120, 0.35)', 'custom-hover': '0 10px 20px rgba(45, 71, 120, 0.1)' }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/Protected/css/dashboards.css" />
+</head>
+<body class="font-body bg-bg text-textMain overflow-x-hidden">
+
+  <div class="flex min-h-screen w-full relative">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[990] hidden lg:hidden"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[1000] w-[260px] bg-primary text-white flex flex-col transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
+      <div class="h-[70px] flex items-center px-6 gap-4 bg-primary-dark shrink-0">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Logo" class="w-10 h-10 rounded-full object-cover">
+        <span class="font-heading font-bold text-lg">Zafiro Home</span>
+      </div>
+
+      <ul class="list-none py-4 flex-1 overflow-y-auto">
+        <li><a href="/Protected/pages/admin.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4"><i class="fa-solid fa-home w-5 text-center"></i> Inicio</a></li>
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Módulos</li>
+        <li><a href="/Protected/pages/panels/productos.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-search w-5 text-center"></i> Productos</a></li>
+        <li><a href="/Protected/pages/panels/categorias.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-layer-group w-5 text-center"></i> Categorías</a></li>
+        <li><a href="/Protected/pages/panels/marcas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-tags w-5 text-center"></i> Marcas</a></li>
+        <li><a href="/Protected/pages/panels/cajas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-box w-5 text-center"></i> Cajas</a></li>
+        <li><a href="/Protected/pages/panels/unidades.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-ruler w-5 text-center"></i> Unidades</a></li>
+        <li><a href="/Protected/pages/panels/presentaciones.html" class="flex items-center px-6 py-3.5 text-white bg-white/10 transition-colors gap-4 border-l-4 border-accent"><i class="fa-solid fa-cubes w-5 text-center"></i> Presentaciones</a></li>
+      </ul>
+    </aside>
+
+    <main class="flex-1 lg:ml-[260px] flex flex-col min-h-screen bg-bg transition-all duration-300">
+      <header class="h-[70px] bg-card shadow-sm flex items-center justify-between px-4 sm:px-8 shrink-0 z-10">
+        <div class="flex items-center gap-4">
+          <button id="menu-toggle" class="lg:hidden text-textMuted hover:text-primary text-xl"><i class="fa-solid fa-bars"></i></button>
+          <h2 class="font-heading font-bold text-xl text-primary m-0">Gestión de Presentaciones</h2>
+        </div>
+      </header>
+
+      <div class="p-4 sm:p-8 flex-1">
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <button id="btnNuevo" class="w-full sm:w-auto bg-success text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-custom hover:shadow-custom-hover flex items-center justify-center gap-2">
+            <i class="fa-solid fa-plus"></i> Nueva Presentación
+          </button>
+          <button id="btnCargarRegistros" class="w-full sm:w-auto bg-primary text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-primary-dark transition-colors shadow-custom hover:shadow-custom-hover flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> Recargar
+          </button>
+        </div>
+
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto w-full p-4">
+            <table id="tablaPresentaciones" class="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr class="bg-bg text-textMuted text-xs uppercase tracking-wider border-b border-gray-200">
+                  <th class="py-3 px-4 font-semibold rounded-tl-lg">ID</th>
+                  <th class="py-3 px-4 font-semibold">Nombre</th>
+                  <th class="py-3 px-4 font-semibold text-center">Estado</th>
+                  <th class="py-3 px-4 font-semibold text-center rounded-tr-lg">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaPresentacionesBody" class="text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modalPresentacion" class="fixed inset-0 bg-primary-dark/40 backdrop-blur-sm z-[2000] opacity-0 invisible transition-all duration-300 flex items-center justify-center p-4">
+    <div id="modalPresentacionContent" class="bg-card w-full max-w-md rounded-2xl shadow-2xl transform translate-y-[-20px] transition-transform duration-300 overflow-hidden">
+      <div class="bg-primary px-6 py-4 flex justify-between items-center">
+        <h3 id="modalTitle" class="font-heading font-bold text-white text-lg m-0"><i class="fa-solid fa-cubes mr-2"></i>Nueva Presentación</h3>
+        <button type="button" class="btn-cerrar-modal text-white/70 hover:text-white transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-6">
+        <form id="formPresentacion">
+          <input type="hidden" id="presentacionId" name="presentacionId" value="">
+          <div class="mb-5">
+            <label for="nombre" class="block text-sm font-semibold text-textMain mb-2">Nombre de la Presentación <span class="text-danger">*</span></label>
+            <input type="text" id="nombre" name="nombre" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm text-textMain bg-bg" placeholder="Ej. Caja 24 pzas">
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button" class="btn-cerrar-modal px-5 py-2 rounded-lg font-semibold text-textMuted hover:bg-gray-100 transition-colors">Cancelar</button>
+            <button type="submit" id="btnGuardar" class="bg-primary text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-dark shadow-md transition-all flex items-center gap-2">
+              <i class="fa-solid fa-save"></i> Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalConfirmDelete" class="fixed inset-0 bg-primary-dark/40 backdrop-blur-sm z-[2000] opacity-0 invisible transition-all duration-300 flex items-center justify-center p-4">
+    <div class="bg-card w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center transform scale-95 transition-transform duration-300 delete-content">
+      <div class="text-danger text-5xl mb-4"><i class="fa-regular fa-circle-xmark"></i></div>
+      <h3 class="font-heading text-xl font-bold text-textMain mb-2">Confirmar Desactivación</h3>
+      <p class="text-textMuted mb-2 text-sm">¿Estás seguro de que deseas desactivar esta presentación?</p>
+      <p id="deleteNombreInfo" class="text-primary font-semibold mb-2 text-sm"></p>
+      <input type="hidden" id="deletePresentacionId" value="">
+      <div class="flex flex-col sm:flex-row justify-center gap-3 mt-6">
+        <button type="button" class="btn-cancelar-delete px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full">Cancelar</button>
+        <button type="button" id="btnConfirmarDelete" class="px-5 py-2.5 rounded-md font-semibold bg-danger text-white hover:bg-red-800 transition-colors w-full">Desactivar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" aria-live="polite" aria-atomic="true" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  </body>
+</html>

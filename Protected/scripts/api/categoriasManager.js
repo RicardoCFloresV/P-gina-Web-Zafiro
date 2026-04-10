@@ -1,7 +1,7 @@
-// API para gestión de categorías (todos los niveles)
+// API para gestión de categorías (todos los niveles: 1 = Principal, 2 = Secundaria, 3 = Subcategoría)
 const categoriasAPI = {
-    // Categorías principales
-    async principalesGetAll() {
+    
+    async getAll() {
         const response = await fetch('/categorias/get_all', {
             method: 'GET',
             headers: {
@@ -11,7 +11,7 @@ const categoriasAPI = {
         return await response.json();
     },
 
-    async principalesGetById(id) {
+    async getById(id) {
         const response = await fetch(`/categorias/por_id/${id}`, {
             method: 'GET',
             headers: {
@@ -21,7 +21,8 @@ const categoriasAPI = {
         return await response.json();
     },
 
-    async principalesInsert(data) {
+    async insert(data) {
+        // data debe contener: { nombre: string, nivel: number (1,2,3), categoria_padre_id: number | null }
         const response = await fetch('/categorias/insert', {
             method: 'POST',
             headers: {
@@ -32,7 +33,8 @@ const categoriasAPI = {
         return await response.json();
     },
 
-    async principalesUpdate(data) {
+    async update(data) {
+        // data debe contener: { categoria_id: number, nombre: string, estado: boolean|0|1 }
         const response = await fetch('/categorias/update', {
             method: 'POST',
             headers: {
@@ -43,121 +45,15 @@ const categoriasAPI = {
         return await response.json();
     },
 
-    async principalesRemove(id) {
-        const response = await fetch('/categorias/delete', {
+    async setState(id, estado) {
+        // Reemplaza a los antiguos métodos de eliminación (remove)
+        // estado: true/1 (activar), false/0 (desactivar)
+        const response = await fetch('/categorias/set_state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ categoria_id: id })
-        });
-        return await response.json();
-    },
-
-    // Categorías secundarias
-    async secundariasGetAll() {
-        const response = await fetch('/categorias_secundarias/get_all', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return await response.json();
-    },
-
-    async secundariasGetById(id) {
-        const response = await fetch(`/categorias_secundarias/por_id/${id}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return await response.json();
-    },
-
-    async secundariasInsert(data) {
-        const response = await fetch('/categorias_secundarias/insert', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        return await response.json();
-    },
-
-    async secundariasUpdate(data) {
-        const response = await fetch('/categorias_secundarias/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        return await response.json();
-    },
-
-    async secundariasRemove(id) {
-        const response = await fetch('/categorias_secundarias/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ categoria_secundaria_id: id })
-        });
-        return await response.json();
-    },
-
-    // Subcategorías
-    async subcategoriasGetAll() {
-        const response = await fetch('/subcategorias/get_all', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return await response.json();
-    },
-
-    async subcategoriasGetById(id) {
-        const response = await fetch(`/subcategorias/por_id/${id}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return await response.json();
-    },
-
-    async subcategoriasInsert(data) {
-        const response = await fetch('/subcategorias/insert', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        return await response.json();
-    },
-
-    async subcategoriasUpdate(data) {
-        const response = await fetch('/subcategorias/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        return await response.json();
-    },
-
-    async subcategoriasRemove(id) {
-        const response = await fetch('/subcategorias/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ subcategoria_id: id })
+            body: JSON.stringify({ categoria_id: id, estado: estado })
         });
         return await response.json();
     }

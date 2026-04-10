@@ -3,256 +3,430 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel de Administración - Cajas</title>
+  <title>Zafiro Home - Gestión de Cajas</title>
 
-  <!-- Iconos y fuentes -->
+  <!-- Fuentes -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Iconos FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@700&display=swap" rel="stylesheet" />
-
-  <!-- DataTables -->
+  
+  <!-- DataTables CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
 
-  <!-- Estilos propios -->
-  <link rel="stylesheet" href="/admin-resources/css/admin.css" />
-
-  <!-- Estilos movidos de inline -->
-  <style>
-    #tablaCajaPorId,
-    #tablaCajas {
-      width: 100%;
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Configuración de Tailwind para adaptar tus variables CSS -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'rgb(45, 71, 120)',
+            'primary-dark': 'rgb(30, 48, 82)',
+            secondary: 'rgb(100, 140, 188)',
+            accent: '#f08a5d',
+            'accent-dark': '#d87245',
+            danger: '#a5230c',
+            success: '#16a34a',
+            bg: '#f6f7fb',
+            card: '#ffffff',
+            textMain: '#333333',
+            textMuted: '#737b90',
+          },
+          fontFamily: {
+            body: ['Open Sans', 'sans-serif'],
+            heading: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            'custom': '0 4px 12px rgba(45, 71, 120, 0.35)',
+            'custom-hover': '0 10px 20px rgba(45, 71, 120, 0.1)',
+          }
+        }
+      }
     }
-  </style>
+  </script>
+
+  <!-- Estilos del dashboard (DataTables overrides, toggles, previews) -->
+  <link rel="stylesheet" href="/Protected/css/dashboards.css" />
 </head>
-<body class="page-body">
-  <div class="top-banner">Panel de Administración - Cajas</div>
+<body class="font-body bg-bg text-textMain overflow-x-hidden">
 
-  <nav class="navbar">
-    <div class="navbarcontainer">
-      <a class="navbar-store-title" href="#">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Zafiro Home" height="40" class="navbar-logo me-2">
-        <span>Zafiro Home</span>
-      </a>
-      <a class="btn" href="/admin-resources/pages/admin.html">Regresar al panel general</a>
-    </div>
-  </nav>
+  <div class="flex min-h-screen w-full relative">
+    
+    <!-- Sidebar Overlay (Móvil) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[990] hidden lg:hidden"></div>
 
-  <main class="main-content">
-    <section class="card scroll-reveal" id="admin-header">
-      <h1 class="admin-title">Panel: Cajas</h1>
-      <p class="admin-subtitle">Módulo de administración de cajas de almacenamiento.</p>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[1000] w-[260px] bg-primary text-white flex flex-col transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
       
-      <div class="search-integration">
-        <h3>Sistema Integrado de Búsqueda</h3>
-        <p>Ahora las búsquedas por componentes y por ID están integradas. Al buscar por componentes, el sistema encontrará el ID correspondiente y mostrará los detalles completos en la sección de búsqueda por ID.</p>
+      <!-- Brand -->
+      <div class="h-[70px] flex items-center px-6 gap-4 bg-primary-dark shrink-0">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Logo" class="w-10 h-10 rounded-full object-cover">
+        <span class="font-heading font-bold text-lg">Zafiro Home</span>
       </div>
-    </section>
-
-    <!-- Panel de búsqueda por componentes -->
-    <section class="card p-3 mb-4 shadow-sm scroll-reveal search-panel">
-      <div class="card-head">
-        <h2 class="mb-3">Búsqueda por Componentes</h2>
-      </div>
-      <form id="searchForm">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="letra1" class="form-label">Primera Letra</label>
-            <select id="letra1" class="form-control" required>
-              <option value="">Seleccionar...</option>
-              <!-- Opciones A-Z se llenarán con JavaScript -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="letra2" class="form-label">Segunda Letra (opcional)</label>
-            <select id="letra2" class="form-control">
-              <option value="">Ninguna</option>
-              <!-- Opciones A-Z se llenarán con JavaScript -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="cara" class="form-label">Cara</label>
-            <select id="cara" class="form-control" required>
-              <option value="">Seleccionar...</option>
-              <option value="1">Frente</option>
-              <option value="2">Atrás</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="nivel" class="form-label">Nivel</label>
-            <select id="nivel" class="form-control" required>
-              <option value="">Seleccionar...</option>
-              <option value="1">Arriba</option>
-              <option value="2">Abajo</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <button type="submit" class="btn btn-primary">
-            <i class="fa-solid fa-magnifying-glass me-1"></i> Buscar y Mostrar por ID
-          </button>
-          <button type="button" id="btnLimpiarBusqueda" class="btn btn-ghost">
-            <i class="fa-solid fa-eraser me-1"></i> Limpiar
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <!-- Probar obtener por ID -->
-    <section class="card p-3 mb-4 shadow-sm scroll-reveal">
-      <div class="card-head">
-        <h2 class="mb-3">Resultados de Búsqueda (por ID)</h2>
-        <div class="actions">
-          <div class="input-group">
-            <input type="number" id="inputBuscarId" class="form-control" placeholder="ID de caja…" min="1" />
-            <button id="btnBuscarId" class="btn btn-ghost">
-              <i class="fa-solid fa-magnifying-glass me-1"></i> Obtener por ID
-            </button>
+      
+      <!-- Mobile Profile -->
+      <div class="block lg:hidden p-6 bg-black/15 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover">
+          <div>
+            <div class="font-bold text-sm text-white">Admin Zafiro</div>
+            <div class="text-xs text-white/60">Super Administrador</div>
           </div>
         </div>
       </div>
-      <div class="table-responsive mt-3">
-        <table id="tablaCajaPorId" class="display table table-hover w-100">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Letra</th>
-              <th>Cara</th>
-              <th>Nivel</th>
-              <th>Etiqueta</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="5" class="table-message">Realiza una búsqueda para ver los resultados.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      
+      <!-- Sidebar Menu -->
+      <ul class="list-none py-4 flex-1 overflow-y-auto">
+        <li>
+          <a href="/Protected/pages/admin.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4">
+            <i class="fa-solid fa-home w-5 text-center"></i> Inicio
+          </a>
+        </li>
 
-    <!-- Listado general -->
-    <section class="card p-3 mb-5 shadow-sm scroll-reveal">
-      <div class="card-head">
-        <h2 class="mb-3">Listado de Cajas</h2>
-        <div class="actions">
-          <button id="btnRefrescar" class="btn btn-outline-info">
-            <i class="fa-solid fa-rotate me-1"></i> Refrescar
-          </button>
-          <button id="btnAbrirAgregar" class="btn btn-success">
-            <i class="fa-solid fa-plus me-1"></i> Agregar
-          </button>
-          <button id="btnCargarTodos" class="btn btn-primary">
-            <i class="fa-solid fa-database me-1"></i> Cargar todos los registros
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Módulos</li>
+
+        <li>
+          <a href="/Protected/pages/panels/productos.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-search w-5 text-center"></i> Productos
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/categorias.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-layer-group w-5 text-center"></i> Categorías
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/marcas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-tags w-5 text-center"></i> Marcas
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/cajas.html" class="flex items-center px-6 py-3.5 text-white bg-white/10 border-l-4 border-accent transition-colors gap-4">
+            <i class="fa-solid fa-box w-5 text-center"></i> Cajas
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/unidades.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-ruler w-5 text-center"></i> Unidades
+          </a>
+        </li>
+
+        <li>
+          <a href="/Protected/pages/panels/presentaciones.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-cubes w-5 text-center"></i> Presentaciones
+          </a>
+        </li>
+
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Administración</li>
+
+        <li>
+          <a href="/Protected/pages/panels/usuarios.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent">
+            <i class="fa-solid fa-users w-5 text-center"></i> Usuarios
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:ml-[260px]">
+      
+      <!-- Topbar -->
+      <header class="h-[70px] bg-card flex items-center justify-between px-4 sm:px-8 shadow-sm sticky top-0 z-[900]">
+        <button id="menu-toggle" class="lg:hidden text-primary text-2xl p-2 focus:outline-none">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        
+        <!-- User Interface -->
+        <div class="hidden sm:flex items-center gap-6 ml-auto">
+          <div class="flex items-center gap-4">
+            <a href="#" class="text-primary font-semibold flex items-center gap-2 hover:text-accent transition-colors">
+              <i class="fa-solid fa-home"></i> Inicio
+            </a>
+            <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover shadow-sm">
+            <div class="flex flex-col">
+              <span class="font-bold text-sm leading-tight text-textMain">Admin Zafiro</span>
+              <span class="text-xs text-textMuted">Super Administrador</span>
+            </div>
+          </div>
+          <button id="logout-btn" class="bg-danger text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-red-800 transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-sign-out-alt"></i> Salir
           </button>
         </div>
-      </div>
+        
+        <!-- Botón de salir para móvil ultra pequeño -->
+        <button class="sm:hidden bg-danger text-white px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-red-800 transition-colors ml-auto">
+          <i class="fa-solid fa-sign-out-alt"></i>
+        </button>
+      </header>
 
-      <div class="table-responsive">
-        <table id="tablaCajas" class="display table table-hover w-100">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Letra</th>
-              <th>Cara</th>
-              <th>Nivel</th>
-              <th>Etiqueta</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="6" class="table-message">Presiona 'Refrescar' para cargar las cajas.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+      <!-- Dashboard Body -->
+      <main class="p-4 sm:p-8 flex-1">
+        
+        <!-- Module Title Card -->
+        <section class="bg-primary text-white rounded-xl p-6 sm:p-8 shadow-custom mb-6">
+          <h1 class="font-heading text-2xl sm:text-3xl font-bold mb-2">Gestión de Cajas</h1>
+          <p class="text-blue-200 text-sm sm:text-base">Módulo para la búsqueda, administración y control de cajas.</p>
+        </section>
 
-  <footer>
-    <p>© 2025 Zafiro Home. Todos los derechos reservados.</p>
-  </footer>
+        <!-- Gestionar Cajas Card -->
+        <section class="bg-card rounded-xl p-5 sm:p-6 shadow-custom mb-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 class="font-heading text-xl font-bold text-primary m-0">Gestionar Cajas</h2>
+            
+            <div class="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto">
+              <button id="btnBuscarEtiqueta" class="bg-secondary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 shadow-sm" title="Buscar por Etiqueta o ID">
+                <i class="fa-solid fa-magnifying-glass"></i> <span class="hidden sm:inline">Buscar</span>
+              </button>
+              <button id="btnCargarRegistros" class="flex-1 md:flex-none bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-cloud-arrow-down"></i> <span class="hidden sm:inline">Cargar todos los registros</span><span class="sm:hidden">Cargar</span>
+              </button>
+              <button id="btnAnadirCaja" class="flex-1 md:flex-none bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Añadir caja</span><span class="sm:hidden">Añadir</span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto w-full">
+            <table id="tablaCajas" class="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="py-3 px-4 text-textMuted font-semibold">Id</th>
+                  <th class="py-3 px-4 text-textMuted font-semibold">Etiqueta</th>
+                  <th class="py-3 px-4 text-textMuted font-semibold">Stock <i class="fa-solid fa-cubes ml-1"></i></th>
+                  <th class="py-3 px-4 text-textMuted font-semibold text-center">Estado</th>
+                  <th class="py-3 px-4 text-textMuted font-semibold text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaCajasBody">
+                <!-- El contenido se cargará dinámicamente mediante JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-  <!-- Modal (Agregar / Modificar) -->
-  <div class="modal" id="modalCaja" aria-hidden="true" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-header">
-        <h3 class="modal-title" id="modalCajaTitle">Nueva Caja</h3>
-        <button class="btn-close" id="closeModalBtn" aria-label="Cerrar">
+      </main>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Añadir / Modificar Caja
+       Campos: letra (VARCHAR 2), cara (1=FRENTE, 2=ATRAS), nivel (1=ARRIBA, 2=ABAJO)
+       Hidden: caja_id (para update)
+       ============================================================ -->
+  <div id="modalCaja" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50" id="modalCajaBackdrop"></div>
+    
+    <div id="modalCajaContent" class="bg-card rounded-xl w-[95%] max-w-[500px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
+      
+      <div class="flex justify-between items-center mb-6">
+        <h3 id="modalCajaTitle" class="font-heading text-xl font-bold text-primary flex items-center gap-2">
+          <i class="fa-solid fa-box-open"></i> Añadir Nueva Caja
+        </h3>
+        <button class="btn-close-caja text-textMuted hover:text-danger transition-colors text-xl">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
+      
       <div class="modal-body">
-        <form id="cajaForm" novalidate>
-          <input type="hidden" id="caja_id" name="caja_id" />
-          
-          <div class="mb-3">
-            <label class="form-label">Letra</label>
-            <div class="letra-selects">
-              <select id="modalLetra1" class="form-control" required>
-                <option value="">Seleccionar...</option>
-                <!-- Opciones A-Z se llenarán con JavaScript -->
+        <form id="formCaja" class="flex flex-col gap-4">
+          <!-- Hidden: caja_id para cajas_update -->
+          <input type="hidden" id="modalCajaId" value="">
+
+          <!-- Letra (VARCHAR 2: se combinan las dos selecciones) -->
+          <div class="flex flex-col gap-2">
+            <label class="font-semibold text-textMain text-sm">Letra <span class="text-textMuted font-normal">(1-2 caracteres)</span></label>
+            <div class="flex gap-3 w-full">
+              <select id="modalLetra1" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+                <option value="">--</option>
               </select>
-              <span>-</span>
-              <select id="modalLetra2" class="form-control">
-                <option value="">Ninguna</option>
-                <!-- Opciones A-Z se llenarán con JavaScript -->
+              <select id="modalLetra2" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+                <option value="">(opcional)</option>
               </select>
             </div>
-            <small class="text-muted">Selecciona una o dos letras (A-Z)</small>
           </div>
-          
-          <div class="mb-3">
-            <label for="modalCara" class="form-label">Cara</label>
-            <select id="modalCara" class="form-control" required>
-              <option value="">Seleccionar...</option>
-              <option value="1">Frente</option>
-              <option value="2">Atrás</option>
+
+          <!-- Cara (TINYINT: 1=FRENTE, 2=ATRAS) -->
+          <div class="flex flex-col gap-2">
+            <label for="modalCara" class="font-semibold text-textMain text-sm">Cara</label>
+            <select id="modalCara" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+              <option value="">Selecciona una opción</option>
+              <option value="1">FRENTE</option>
+              <option value="2">ATRAS</option>
             </select>
           </div>
-          
-          <div class="mb-3">
-            <label for="modalNivel" class="form-label">Nivel</label>
-            <select id="modalNivel" class="form-control" required>
-              <option value="">Seleccionar...</option>
-              <option value="1">Arriba</option>
-              <option value="2">Abajo</option>
+
+          <!-- Nivel (TINYINT: 1=ARRIBA, 2=ABAJO) -->
+          <div class="flex flex-col gap-2">
+            <label for="modalNivel" class="font-semibold text-textMain text-sm">Nivel</label>
+            <select id="modalNivel" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+              <option value="">Selecciona una opción</option>
+              <option value="1">ARRIBA</option>
+              <option value="2">ABAJO</option>
             </select>
           </div>
-          
-          <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" id="cancelModalBtn">Cancelar</button>
-            <button type="submit" class="btn btn-primary" id="saveCajaBtn">Guardar</button>
+
+          <!-- Preview de la etiqueta generada -->
+          <div class="flex flex-col gap-2">
+            <label class="font-semibold text-textMain text-sm">Vista previa de etiqueta</label>
+            <div id="etiquetaPreview" class="etiqueta-preview bg-gray-50 border border-dashed border-gray-300 rounded-md p-3 text-center text-sm font-semibold text-textMuted">
+              caja -- -- --
+            </div>
           </div>
+
+          <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+            <button type="button" class="btn-close-caja px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto text-center">
+              Cancelar
+            </button>
+            <button type="button" id="btnAccionCaja" class="px-5 py-2.5 rounded-md font-semibold bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
+              <i class="fa-solid fa-check"></i> Agregar
+            </button>
+          </div>
+
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Modal confirmación de eliminación -->
-  <div class="modal" id="modalConfirmDelete" aria-hidden="true" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminación</h3>
-        <button class="btn-close" id="closeDeleteModalBtn" aria-label="Cerrar">
+  <!-- ============================================================
+       MODAL: Buscar por Etiqueta / ID
+       Modo 1: Construir etiqueta con selects (genera string para @etiqueta)
+       Modo 2: Buscar directamente por @id
+       ============================================================ -->
+  <div id="modalBuscar" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50" id="modalBuscarBackdrop"></div>
+    
+    <div id="modalBuscarContent" class="bg-card rounded-xl w-[95%] max-w-[520px] p-6 sm:p-8 shadow-custom-hover relative z-10 transform translate-y-[-20px] transition-transform duration-300">
+      
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-heading text-xl font-bold text-primary flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass"></i> Buscar Caja
+        </h3>
+        <button class="btn-close-buscar text-textMuted hover:text-danger transition-colors text-xl">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div class="modal-body">
-        <p id="deleteMessage" class="mb-3">¿Seguro que deseas eliminar esta caja?</p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">Cancelar</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-            <i class="fa-solid fa-trash-can me-1"></i> Eliminar
-          </button>
+      
+      <!-- Tabs de búsqueda -->
+      <div class="flex border-b border-gray-200 mb-5">
+        <button id="tabBuscarEtiqueta" class="px-4 py-2.5 font-semibold text-sm border-b-2 border-primary text-primary transition-colors">
+          <i class="fa-solid fa-tag mr-1"></i> Por Etiqueta
+        </button>
+        <button id="tabBuscarId" class="px-4 py-2.5 font-semibold text-sm border-b-2 border-transparent text-textMuted hover:text-primary transition-colors">
+          <i class="fa-solid fa-hashtag mr-1"></i> Por ID
+        </button>
+      </div>
+
+      <!-- Panel: Buscar por Etiqueta (construir la etiqueta con selects) -->
+      <div id="panelBuscarEtiqueta" class="flex flex-col gap-4">
+        <p class="text-sm text-textMuted">Construye la etiqueta seleccionando los valores. El formato es: <span class="font-semibold text-textMain">caja [LETRA] [CARA] [NIVEL]</span></p>
+        
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-textMain text-sm">Letra</label>
+          <div class="flex gap-3 w-full">
+            <select id="buscarLetra1" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+              <option value="">--</option>
+            </select>
+            <select id="buscarLetra2" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+              <option value="">(opcional)</option>
+            </select>
+          </div>
         </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-textMain text-sm">Cara</label>
+          <select id="buscarCara" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+            <option value="">Selecciona una opción</option>
+            <option value="FRENTE">FRENTE</option>
+            <option value="ATRAS">ATRAS</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-textMain text-sm">Nivel</label>
+          <select id="buscarNivel" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+            <option value="">Selecciona una opción</option>
+            <option value="ARRIBA">ARRIBA</option>
+            <option value="ABAJO">ABAJO</option>
+          </select>
+        </div>
+
+        <!-- Preview de la etiqueta buscada -->
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-textMain text-sm">Etiqueta a buscar</label>
+          <div id="buscarEtiquetaPreview" class="etiqueta-preview bg-blue-50 border border-dashed border-secondary/40 rounded-md p-3 text-center text-sm font-semibold text-primary">
+            caja -- -- --
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel: Buscar por ID -->
+      <div id="panelBuscarId" class="flex flex-col gap-4 hidden">
+        <p class="text-sm text-textMuted">Ingresa el ID numérico de la caja que deseas buscar.</p>
+        
+        <div class="flex flex-col gap-2">
+          <label for="buscarIdInput" class="font-semibold text-textMain text-sm">ID de la Caja</label>
+          <input type="number" id="buscarIdInput" min="1" placeholder="Ej: 1001"
+            class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all">
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+        <button type="button" class="btn-close-buscar px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto text-center">
+          Cancelar
+        </button>
+        <button type="button" id="btnAccionBuscar" class="px-5 py-2.5 rounded-md font-semibold bg-secondary text-white hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
+          <i class="fa-solid fa-search"></i> Buscar
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Toast container -->
-  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+  <!-- ============================================================
+       MODAL: Confirmar Eliminar (soft delete via cajas_set_state)
+       ============================================================ -->
+  <div id="modalConfirmDelete" class="fixed inset-0 z-[2000] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+    <div class="absolute inset-0 bg-black/50 btn-cancelar-delete"></div>
+    
+    <div class="bg-card rounded-xl w-[90%] max-w-[400px] p-6 sm:p-8 text-center relative z-10 transform translate-y-[-20px] transition-transform duration-300 delete-content shadow-custom-hover">
+      
+      <div class="text-danger text-5xl mb-4">
+        <i class="fa-regular fa-circle-xmark"></i>
+      </div>
+      <h3 class="font-heading text-xl font-bold text-textMain mb-2">Confirmar Desactivación</h3>
+      <p class="text-textMuted mb-2 text-sm">¿Estás seguro de que deseas desactivar esta caja?</p>
+      <p id="deleteEtiquetaInfo" class="text-primary font-semibold mb-2 text-sm"></p>
+      <p class="text-textMuted mb-6 text-xs">(La caja se marcará como inactiva. Si tiene productos asignados, la operación será rechazada.)</p>
+      
+      <!-- Hidden: caja_id para cajas_set_state -->
+      <input type="hidden" id="deleteCajaId" value="">
+      
+      <div class="flex flex-col sm:flex-row justify-center gap-3">
+        <button type="button" class="btn-cancelar-delete px-5 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors w-full">
+          Cancelar
+        </button>
+        <button type="button" id="btnConfirmarDelete" class="px-5 py-2.5 rounded-md font-semibold bg-danger text-white hover:bg-red-800 transition-colors w-full">
+          Desactivar
+        </button>
+      </div>
+      
+    </div>
+  </div>
 
-  <!-- jQuery + DataTables base -->
+  <!-- Toast Container -->
+  <div id="toastContainer" aria-live="polite" aria-atomic="true" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 max-w-[90vw] sm:max-w-sm"></div>
+
+  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-
-  <!-- Control del panel -->
-  <script type="module" src="/admin-resources/scripts/control/panel-adm-cajas.js"></script>
+  
+  <!-- Dashboard controller (módulo ES) -->
+  <script type="module" src="/Protected/scripts/control/cajasDashboard.js"></script>
 </body>
 </html>

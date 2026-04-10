@@ -3,187 +3,287 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel de Administración - Productos</title>
-
-  <!-- Iconos y fuentes -->
+  <title>Zafiro Home - Gestión de Productos</title>
+  <!-- Fuentes -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- Iconos FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@700&display=swap" rel="stylesheet" />
-
-  <!-- DataTables -->
+  <!-- DataTables CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'rgb(45, 71, 120)',
+            'primary-dark': 'rgb(30, 48, 82)',
+            secondary: 'rgb(100, 140, 188)',
+            accent: '#f08a5d',
+            'accent-dark': '#d87245',
+            danger: '#a5230c',
+            bg: '#f6f7fb',
+            card: '#ffffff',
+            textMain: '#333333',
+            textMuted: '#737b90',
+          },
+          fontFamily: {
+            body: ['Open Sans', 'sans-serif'],
+            heading: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            'custom': '0 4px 12px rgba(45, 71, 120, 0.35)',
+            'custom-hover': '0 10px 20px rgba(45, 71, 120, 0.1)',
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Modal mechanics + DataTables overrides -->
+  <link rel="stylesheet" href="/Protected/css/dashboards.css" />
 
-  <!-- Estilos propios -->
-  <link rel="stylesheet" href="/admin-resources/css/admin.css" />
-
-  <!-- Estilos movidos -->
-  <style>
-    #toastContainer { 
-      position: fixed; 
-      right: 16px; 
-      bottom: 16px; 
-      display: flex; 
-      flex-direction: column; 
-      gap: 8px; 
-      z-index: 2000; 
-    }
-    .toast { 
-      min-width: 260px; 
-      max-width: 420px; 
-      padding: 12px 14px; 
-      border-radius: 10px; 
-      box-shadow: 0 6px 24px rgba(0,0,0,.12);
-      font-family: "Open Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
-      font-size: 14px; 
-      line-height: 1.35;
-      display: flex; 
-      align-items: center; 
-      gap: 8px; 
-      animation: slidein .2s ease-out; 
-    }
-    .toast i { opacity: .9; }
-    .toast-success { background: #e7f6ec; color: #145a32; }
-    .toast-error   { background: #fdecea; color: #7a2e2e; }
-    .toast-info    { background: #eef2ff; color: #1f3a8a; }
-    @keyframes slidein { 
-      from { transform: translateY(8px); opacity: 0; } 
-      to   { transform: translateY(0); opacity: 1; } 
-    }
-
-    /* Ajuste de ancho del select de búsqueda */
-    #tipoBusqueda { 
-      max-width: 120px; 
-    }
-  </style>
 </head>
-<body class="page-body">
-  <div class="top-banner">Panel de Administración - Productos</div>
-
-  <nav class="navbar">
-    <div class="navbarcontainer">
-      <a class="navbar-store-title" href="#">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Zafiro Home" height="40" class="navbar-logo me-2">
-        <span>Zafiro Home</span>
-      </a>
-      <a class="btn" href="/admin-resources/pages/admin.html">Regresar al panel general</a>
-    </div>
-  </nav>
-
-  <main class="main-content">
-    <section class="card scroll-reveal" id="admin-header">
-      <h1 class="admin-title">Panel: Productos</h1>
-      <p class="admin-subtitle">Administración de productos del inventario.</p>
-    </section>
-
-    <!-- Búsqueda por ID o Nombre -->
-    <section class="card p-3 mb-4 shadow-sm scroll-reveal">
-      <div class="card-head">
-        <h2 class="mb-3">Búsqueda</h2>
-        <div class="actions">
-          <div class="input-group">
-            <input type="text" id="inputBuscar" class="form-control" placeholder="ID o Nombre…" />
-            <label for="tipoBusqueda">Tipo de búsqueda</label>
-            <select id="tipoBusqueda" class="form-control">
-              <option value="id">ID</option>
-              <option value="nombre">Nombre</option>
-            </select>
-            <button id="btnBuscar" class="btn btn-ghost">
-              <i class="fa-solid fa-magnifying-glass me-1"></i> Buscar
-            </button>
+<body class="font-body bg-bg text-textMain overflow-x-hidden">
+  <div class="flex min-h-screen w-full relative">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[990] hidden lg:hidden"></div>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[1000] w-[260px] bg-primary text-white flex flex-col transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
+      <div class="h-[70px] flex items-center px-6 gap-4 bg-primary-dark shrink-0">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=60&h=60&q=80" alt="Logo" class="w-10 h-10 rounded-full object-cover">
+        <span class="font-heading font-bold text-lg">Zafiro Home</span>
+      </div>
+      <div class="block lg:hidden p-6 bg-black/15 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover">
+          <div>
+            <div class="font-bold text-sm text-white">Admin Zafiro</div>
+            <div class="text-xs text-white/60">Super Administrador</div>
           </div>
         </div>
       </div>
-      <div class="table-responsive mt-3">
-        <table id="tablaBusqueda" class="display table table-hover w-100">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Precio</th>
-              <th>Categoría</th>
-              <th>Marca</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="6" class="text-muted">Realiza una búsqueda para ver los resultados.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <ul class="list-none py-4 flex-1 overflow-y-auto">
+        <li><a href="#" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4"><i class="fa-solid fa-home w-5 text-center"></i> Inicio</a></li>
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Módulos</li>
+        <li><a href="productos.html" class="flex items-center px-6 py-3.5 text-white bg-white/10 border-l-4 border-accent transition-colors gap-4"><i class="fa-solid fa-search w-5 text-center"></i> Productos</a></li>
+        <li><a href="categorias.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-layer-group w-5 text-center"></i> Categorías</a></li>
+        <li><a href="marcas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-tags w-5 text-center"></i> Marcas</a></li>
+        <li><a href="cajas.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-box w-5 text-center"></i> Cajas</a></li>
+        <li><a href="unidades.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-ruler w-5 text-center"></i> Unidades</a></li>
+        <li class="px-6 pt-6 pb-2 text-xs uppercase tracking-wider text-white/50 font-bold">Administración</li>
+        <li><a href="usuarios.html" class="flex items-center px-6 py-3.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors gap-4 border-l-4 border-transparent hover:border-accent"><i class="fa-solid fa-users w-5 text-center"></i> Usuarios</a></li>
+      </ul>
+    </aside>
 
-    <!-- Listado general -->
-    <section class="card p-3 mb-5 shadow-sm scroll-reveal">
-      <div class="card-head">
-        <h2 class="mb-3">Listado de Productos</h2>
-        <div class="actions">
-          <button id="btnRefrescar" class="btn btn-outline-info">
-            <i class="fa-solid fa-rotate me-1"></i> Refrescar
-          </button>
-          <a href="/admin-resources/pages/panels/nuevo_producto.html" class="btn btn-success">
-            <i class="fa-solid fa-plus me-1"></i> Agregar
-          </a>
-          <button id="btnVerActivos" class="btn btn-primary">
-            <i class="fa-solid fa-eye me-1"></i> Ver Activos
-          </button>
-        </div>
-      </div>
-
-      <div class="table-responsive">
-        <table id="tablaProductos" class="display table table-hover w-100">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Precio</th>
-              <th>Categoría</th>
-              <th>Marca</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="8" class="text-muted">Presiona 'Refrescar' para cargar los productos.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <p>© 2025 Zafiro Home. Todos los derechos reservados.</p>
-  </footer>
-
-  <!-- Modal confirmación de eliminación -->
-  <div class="modal" id="modalConfirmDelete" aria-hidden="true" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminación</h3>
-        <button class="btn-close" id="closeDeleteModalBtn" aria-label="Cerrar">
-          <i class="fa-solid fa-xmark"></i>
+    <div class="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:ml-[260px]">
+      <header class="h-[70px] bg-card flex items-center justify-between px-4 sm:px-8 shadow-sm sticky top-0 z-[900]">
+        <button id="menu-toggle" class="lg:hidden text-primary text-2xl p-2 focus:outline-none">
+          <i class="fa-solid fa-bars"></i>
         </button>
-      </div>
-      <div class="modal-body">
-        <p id="deleteMessage" class="mb-3">¿Seguro que deseas eliminar este producto?</p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">Cancelar</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-            <i class="fa-solid fa-trash-can me-1"></i> Eliminar
+        <div class="hidden sm:flex items-center gap-6 ml-auto">
+          <div class="flex items-center gap-4">
+            <a href="#" class="text-primary font-semibold flex items-center gap-2 hover:text-accent transition-colors">
+              <i class="fa-solid fa-home"></i> Inicio
+            </a>
+            <img src="https://ui-avatars.com/api/?name=Admin+Zafiro&background=2d4778&color=fff" alt="Perfil" class="w-10 h-10 rounded-full object-cover shadow-sm">
+            <div class="flex flex-col">
+              <span class="font-bold text-sm leading-tight text-textMain">Admin Zafiro</span>
+              <span class="text-xs text-textMuted">Super Administrador</span>
+            </div>
+          </div>
+          <button id="logout-btn" class="bg-danger text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-red-800 transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-sign-out-alt"></i> Salir
           </button>
         </div>
+        <button class="sm:hidden bg-danger text-white px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-red-800 transition-colors ml-auto">
+          <i class="fa-solid fa-sign-out-alt"></i>
+        </button>
+      </header>
+      <main class="p-4 sm:p-8 flex-1">
+        <section class="bg-primary text-white rounded-xl p-6 sm:p-8 shadow-custom mb-6">
+          <h1 class="font-heading text-2xl sm:text-3xl font-bold mb-2">Gestión de Productos</h1>
+          <p class="text-blue-200 text-sm sm:text-base">Administración de productos, stock e inventario por caja.</p>
+        </section>
+
+        <section class="bg-card rounded-xl p-5 sm:p-6 shadow-custom mb-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 class="font-heading text-xl font-bold text-primary">Inventario de Productos</h2>
+            <div class="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto">
+              <button id="btnAbrirBuscar" class="bg-secondary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-[#5579a3] transition-colors flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-magnifying-glass"></i> <span class="hidden sm:inline">Buscar</span></button>
+              <button id="btnCargarRegistros" class="bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-cloud-arrow-down"></i> <span class="hidden sm:inline">Cargar todos</span></button>
+              <button id="btnAnadirProducto" class="bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nuevo producto</span></button>
+            </div>
+          </div>
+          <div class="overflow-x-auto w-full">
+            <table id="tablaProductos" class="w-full text-left border-collapse whitespace-nowrap">
+              <thead><tr class="border-b border-gray-200">
+                <th class="py-3 px-4 text-textMuted font-semibold">ID</th>
+                <th class="py-3 px-4 text-textMuted font-semibold">Nombre</th>
+                <th class="py-3 px-4 text-textMuted font-semibold">Precio</th>
+                <th class="py-3 px-4 text-textMuted font-semibold">Categoría</th>
+                <th class="py-3 px-4 text-textMuted font-semibold">Marca</th>
+                <th class="py-3 px-4 text-textMuted font-semibold">Presentación</th>
+                <th class="py-3 px-4 text-textMuted font-semibold">Unidad</th>
+                <th class="py-3 px-4 text-textMuted font-semibold text-center">Stock</th>
+                <th class="py-3 px-4 text-textMuted font-semibold text-center">Estado</th>
+                <th class="py-3 px-4 text-textMuted font-semibold text-center">Acciones</th>
+              </tr></thead>
+              <tbody id="tablaProductosBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="bg-card rounded-xl p-5 sm:p-6 shadow-custom mb-6 hidden" id="boxCardsSection">
+          <h2 class="font-heading text-xl font-bold text-primary mb-4"><i class="fa-solid fa-box-open mr-2"></i>Ubicación en Cajas</h2>
+          <div id="boxCardsContainer"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="modalBuscar" class="modal-overlay">
+    <div class="modal-content bg-card max-w-[520px] p-6 sm:p-8 shadow-custom-hover">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="font-heading text-lg font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-magnifying-glass"></i> Buscar Producto</h3>
+        <button class="btn-close-modal text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formBuscar" class="flex flex-col">
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">ID</label>
+            <input type="number" id="searchId" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm" placeholder="Ej. 42" min="1">
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Nombre</label>
+            <input type="text" id="searchNombre" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm" placeholder="Ej. Brocha 3 pulgadas" >
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Categoría</label>
+            <select id="searchCategoria" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Todas</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Marca</label>
+            <select id="searchMarca" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Todas</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Unidad</label>
+            <select id="searchUnidad" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Todas</option></select>
+          </div>
+        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+          <button type="button" class="btn-close-modal px-4 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors" id="btnCancelarBuscar">Cancelar</button>
+          <button type="submit" class="bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-search"></i> Buscar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="modalProducto" class="modal-overlay">
+    <div class="modal-content bg-card max-w-[700px] p-6 sm:p-8 shadow-custom-hover">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="font-heading text-lg font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-plus"></i> <span id="modalProductoTitle">Nuevo Producto</span></h3>
+        <button class="btn-close-modal text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formProducto" class="flex flex-col">
+        <input type="hidden" id="modalProductoId" value="">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Nombre <span class="text-danger">*</span></label>
+            <input type="text" id="modalNombre" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm" placeholder="" required maxlength="100">
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Precio ($) <span class="text-danger">*</span></label>
+            <input type="number" id="modalPrecio" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+        </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Descripción</label>
+            <textarea id="modalDescripcion" class="{form_input}" maxlength="255" rows="2"></textarea>
+          </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Cat. Principal <span class="text-danger">*</span></label>
+            <select id="modalCategoriaPrincipal" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Seleccione...</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Cat. Secundaria</label>
+            <select id="modalCategoriaSecundaria" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Seleccione...</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Subcategoría</label>
+            <select id="modalSubcategoria" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Seleccione...</option></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Unidad <span class="text-danger">*</span></label>
+            <select id="modalUnidad" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Seleccione...</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Valor Unidad <span class="text-danger">*</span></label>
+            <input type="number" id="modalUnidadValor" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm" placeholder="" step="0.01" min="0.01" required>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Presentación <span class="text-danger">*</span></label>
+            <select id="modalPresentacion" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Seleccione...</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Marca <span class="text-danger">*</span></label>
+            <select id="modalMarca" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Seleccione...</option></select>
+          </div>
+        </div>
+        <div id="grupoStockInicial" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Caja inicial</label>
+            <select id="modalCaja" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Sin caja (crear sin stock)</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Stock inicial</label>
+            <input type="number" id="modalStockInicial" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm" placeholder="0" min="0" value="0">
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+          <button type="button" class="btn-close-modal px-4 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors" id="btnCancelarProducto">Cancelar</button>
+          <button type="submit" class="bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm" id="btnAccionProducto"><i class="fa-solid fa-check"></i> Crear Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="modalAddToBox" class="modal-overlay">
+    <div class="modal-content bg-card max-w-[420px] p-6 sm:p-8 shadow-custom-hover">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="font-heading text-lg font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-box"></i> Agregar a Caja</h3>
+        <button class="btn-close-modal text-textMuted hover:text-danger transition-colors text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAddToBox" class="flex flex-col">
+        <input type="hidden" id="addBoxProductoId" value="">
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Caja <span class="text-danger">*</span></label>
+            <select id="addBoxCaja" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm"><option value="">Seleccione caja...</option></select>
+          </div>
+          <div class="flex flex-col gap-1.5 mb-4">
+            <label class="font-semibold text-textMain text-sm">Cantidad <span class="text-danger">*</span></label>
+            <input type="number" id="addBoxCantidad" class="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 bg-white transition-all text-sm" placeholder="1" min="1" value="1" required>
+          </div>
+        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+          <button type="button" class="btn-close-modal px-4 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors" id="btnCancelarAddBox">Cancelar</button>
+          <button type="submit" class="bg-primary text-white px-4 py-2.5 rounded-md font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-plus"></i> Agregar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="modalConfirmDelete" class="modal-overlay">
+    <div class="modal-content bg-card max-w-[400px] p-6 sm:p-8 shadow-custom-hover text-center">
+      <div class="text-danger text-5xl mb-4"><i class="fa-regular fa-circle-xmark"></i></div>
+      <h3 class="font-heading text-xl font-bold text-textMain mb-2">Confirmar Desactivación</h3>
+      <p id="deleteMessage" class="text-textMuted mb-6 text-sm">¿Estás seguro de que deseas desactivar este registro?</p>
+      <input type="hidden" id="deleteProductoId" value="">
+      <div class="flex justify-center gap-3">
+        <button type="button" class="btn-cancelar-delete px-4 py-2.5 rounded-md font-semibold text-textMuted border border-gray-300 hover:bg-gray-50 transition-colors">Cancelar</button>
+        <button type="button" id="btnConfirmarDelete" class="bg-danger text-white px-5 py-2.5 rounded-md font-semibold hover:bg-red-800 transition-colors">Desactivar</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast container -->
-  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
-
-  <!-- jQuery + DataTables base -->
+  <div id="toastContainer" aria-live="polite" aria-atomic="true" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3"></div>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-
-  <!-- API y Control del panel -->
-  <script type="module" src="/admin-resources/scripts/api/productosManager.js"></script>
-  <script type="module" src="/admin-resources/scripts/control/panel-adm-productos.js"></script>
+  <script type="module" src="/Protected/scripts/control/productosDashboard.js"></script>
 </body>
 </html>

@@ -29,6 +29,7 @@ BEGIN
   SET NOCOUNT ON;
   SELECT log_id, fecha, origen, mensaje FROM logs ORDER BY fecha DESC;
 END;
+GO
 
 --get_logs_by_origen + @origen = log_id, fecha, origen, mensaje
 CREATE OR ALTER PROCEDURE get_logs_by_origen
@@ -170,7 +171,7 @@ CREATE TABLE usuarios (
   contrasena     NVARCHAR(255) NOT NULL,
   email          NVARCHAR(150) NOT NULL UNIQUE,
   fecha_registro DATETIME2     NOT NULL DEFAULT GETDATE(),
-  tipo           TINYINT       NOT NULL CHECK (tipo IN (1,2)) -- 1=ADMIN, 2=USUARIO,
+  tipo           TINYINT       NOT NULL CHECK (tipo IN (1,2)), -- 1=ADMIN, 2=USUARIO,
   estado         BIT           NOT NULL DEFAULT (1) -- 1=ACTIVO, 0=INACTIVO
 );
 GO
@@ -353,7 +354,7 @@ BEGIN
     THROW;
   END CATCH
 END;
-
+GO
 
 
 /* =========================================================
@@ -544,6 +545,7 @@ BEGIN
   SET NOCOUNT ON;
   SELECT marca_id, nombre FROM marcas WHERE estado=1 ORDER BY nombre;
 END;
+GO
 
 -- marcas_get_by_id + @marca_id = marca_id, nombre
 CREATE OR ALTER PROCEDURE marcas_get_by_id
@@ -554,7 +556,6 @@ BEGIN
   SELECT marca_id, nombre FROM marcas WHERE marca_id=@marca_id AND estado=1;
 END;
 GO
-
 
 
 /* ============================

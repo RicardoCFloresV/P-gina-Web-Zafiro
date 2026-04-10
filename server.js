@@ -4,186 +4,198 @@
 require('dotenv').config();
 
 /**
- * Importación de módulos
+ * Importación de módulos principales
  */
-const express  = require('express');     // Servidor HTTP
-const cors     = require('cors');        // CORS
-const session  = require('express-session'); // Sesiones de usuario
-const path     = require('path');        // Rutas de archivos
+const express    = require('express');         // Servidor HTTP
+const cors       = require('cors');            // CORS
+const session    = require('express-session'); // Sesiones de usuario
+const MSSQLStore = require('connect-mssql-v2'); // Sesiones persistentes en SQL Server
+const helmet     = require('helmet');          // Seguridad HTTP
+const path       = require('path');            // Rutas de archivos
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi    = require('swagger-ui-express');
 
 // Conector con la base de datos (pool + utilidades)
 const { db } = require('./db/dbconnector.js');
+
+// Importar Enrutadores
+const authModule             = require('./Routes/authRouter.js'); 
+const authRouter             = authModule.router || authModule; 
+const UnidadesRouter         = require('./Routes/unidadesRouter.js');
+const cajasRouter            = require('./Routes/cajasRouter.js');
+const categoriasRouter       = require('./Routes/categoriasRouter.js');
+const marcasRouter           = require('./Routes/marcasRouter.js');
+const presentacionesRouter   = require('./Routes/presentacionesRouter.js');
+const productosRouter        = require('./Routes/productosRouter.js');
+
+// Middlewares de autorización para proteger las rutas
+const { requireAuth, requireAdmin, requireUser } = authModule;
 
 /**
  * APP y MIDDLEWARES BASE
  */
 const app = express();
-app.use(express.static('Public'));                 // estáticos públicos
+
+// 1. HELMET: Seguridad en Cabeceras 
+app.use(helmet({
+  hsts: false, // Desactivado 
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "http://127.0.0.1:5500", "http://localhost:5500"], // Permite a Live Server comunicarse
+      upgradeInsecureRequests: null
+    },
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configuración de sesiones
+/**
+ * CONFIGURACIÓN DE SESIONES PERSISTENTES (connect-mssql-v2)
+ */
+const dbConfig = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: true,
+    trustServerCertificate: true // Requerido para desarrollo local sin SSL formal en SQL Server
+  }
+};
+
+const sessionStore = new MSSQLStore({ ...dbConfig, autoRemove: true }, {
+  table: 'sesiones_usuario', // La tabla se llamará así en SQL Server
+  autoCreate: true           // Crea la tabla automáticamente si no existe
+});
+
 app.use(session({
-  secret: process.env.SESSION_SECRET, // Clave secreta para firmar la cookie de sesión
+  store: sessionStore,
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   rolling: true,
-  cookie: { maxAge: 60 * 60 * 1000 } // 1h
+  cookie: { 
+    maxAge: 60 * 60 * 1000, // 1 hora de duración
+    httpOnly: true,
+    secure: false // (sin HTTPS)
+  }
 }));
 
-const PUBLIC_DIR = path.resolve(process.cwd(), 'Public'); // Ruta absoluta a /Public
+/**
+ * LIMITADOR DE SOLICITUDES CONCURRENTES POR SESIÓN (Evita Spam a la DB)
+ */
+const activeRequests = new Map();
 
-// Servir archivos estáticos (css/, scripts/, imágenes, etc.)
+app.use((req, res, next) => {
+  if (!req.sessionID) return next();
+
+  const currentRequests = activeRequests.get(req.sessionID) || 0;
+
+  // Límite establecido a 4 solicitudes concurrentes
+  if (currentRequests >= 4) {
+    return res.status(429).json({ 
+      success: false, 
+      message: 'Demasiadas solicitudes simultáneas. Por favor, espere.' 
+    });
+  }
+
+  activeRequests.set(req.sessionID, currentRequests + 1);
+
+  // Reducir el contador cuando termine la petición
+  res.on('finish', () => {
+    const count = activeRequests.get(req.sessionID);
+    if (count > 1) {
+      activeRequests.set(req.sessionID, count - 1);
+    } else {
+      activeRequests.delete(req.sessionID); // Limpieza de memoria
+    }
+  });
+
+  next();
+});
+
+/**
+ * CONFIGURACIÓN DE SWAGGER
+ */
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API Documentation',
+      version: '1.0.0',
+      description: 'Documentación de la API para Autenticación y Unidades',
+    },
+    servers: [
+      {
+        // Matches the port fallback you already use
+        url: `http://localhost:${process.env.PORT || 3000}`, 
+      },
+    ],
+  },
+  // This points to the folder where you keep your route files
+  apis: ['./Routes/*.js'], 
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+// Ruta de documentación Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
+/**
+ * ARCHIVOS ESTÁTICOS
+ */
+const PUBLIC_DIR = path.resolve(process.cwd(), 'Public');
 app.use(express.static(PUBLIC_DIR, {
-  index: 'index.html',      // sirve /Public/index.html en "/"
-  maxAge: '1d',             // cache estáticos (opcional)
+  index: 'index.html',
+  maxAge: '1d',
 }));
 
-// Ruta explícita a "/" 
+/**
+ * RUTAS DE LA API
+ */
+/**
+ * RUTAS DE LA API
+ */
+// Ruta pública de Autenticación (Login, Logout, etc.)
+app.use('/api/auth', authRouter);
+
+// Rutas protegidas (Requieren autenticación previa y opcionalmente roles)
+app.use('/api/unidades', requireAuth, UnidadesRouter); 
+app.use('/api/cajas', requireAuth, cajasRouter);
+app.use('/api/categorias', requireAuth, categoriasRouter);
+app.use('/api/marcas', requireAuth, marcasRouter);
+app.use('/api/presentaciones', requireAuth, presentacionesRouter);
+app.use('/api/productos', requireAuth, productosRouter);
+
+// Fallback al index.html explícito
 app.get('/', (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
-
-
 /**
- * ENDPOINTS DE NEGOCIO
+ * ARRANQUE DEL SERVIDOR
  */
-
-// RUTA DE AUTENTICACIÓN
-// Exporta el router principal (login/logout/status) y, además, middlewares de autorización.
-const authRouter = require('./Server/Routes/authRouter.js');
-// Extrae los middlewares del mismo módulo (evita un segundo require)
-const { requireAuth, requireAdmin, requireUser } = authRouter;
-
-// Monta /auth después de tener el router definido
-app.use('/auth', authRouter);
-
-/**
- * RECURSOS ESTÁTICOS PROTEGIDOS
- * - /admin-resources: requiere rol Admin (p.ej., paneles internos, reportes sensibles)
- * - /user-resources: requiere solo usuario autenticado
- *
- * Ambos sirven estáticos sin índice por defecto y con caché privada de 1h.
- */
-
-// Admin-only
-const PROTECTED_DIR = path.resolve(process.cwd(), 'Protected');
-const adminStatic = express.static(PROTECTED_DIR, {
-  index: false,
-  maxAge: '1h',
-  setHeaders: (res) => res.setHeader('Cache-Control', 'private, max-age=3600'),
-});
-// requiereAdmin valida sesión + rol admin
-app.use('/admin-resources', requireAdmin, adminStatic);
-
-// Users (autenticados, no admin)
-const USERS_DIR = path.resolve(process.cwd(), 'Usuarios');
-const userStatic = express.static(USERS_DIR, {
-  index: false,
-  maxAge: '1h',
-  setHeaders: (res) => res.setHeader('Cache-Control', 'private, max-age=3600'),
-});
-// requireUser valida sesión + asegura que no sea admin 
-app.use('/user-resources', requireAuth, userStatic);
-
-/**
- * Rutas de dominio
- * Cada router encapsula CRUD/operaciones del recurso y se monta bajo su prefijo.
- */
-const cajasRouter = require('./Server/Routes/cajasRouter.js');                   // Cajas y movimientos
-app.use('/cajas', cajasRouter);
-
-const categoriasRouter = require('./Server/Routes/categoriasRouter.js');                   // Categorías primarias
-app.use('/categorias', categoriasRouter);
-
-const categoriasSecundariasRouter = require('./Server/Routes/categorias_secundariasRouter.js'); // Categorías secundarias
-app.use('/categorias_secundarias', categoriasSecundariasRouter);
-
-const subcategoriasRouter = require('./Server/Routes/subcategoriasRouter.js');  // Subcategorías
-app.use('/subcategorias', subcategoriasRouter);
-
-const brandsRouter = require('./Server/Routes/brandsRouter.js');                 // Marcas
-app.use('/brands', brandsRouter);
-
-const sizesRouter = require('./Server/Routes/sizesRouter.js');                   // Unidades de tamaños
-app.use('/sizes', sizesRouter);
-
-const unitsRouter = require('./Server/Routes/unitsRouter.js');                   // Unidades de medida
-app.use('/units', unitsRouter);
-
-const productosRouter = require('./Server/Routes/productosRouter.js');           // Productos (CRUD y consultas)
-app.use('/productos', productosRouter);
-
-const stockRouter = require('./Server/Routes/stockRouter.js');                   // Operaciones de stock (entradas/salidas/ajustes)
-app.use('/stock', stockRouter);
-
-const reportesStockRouter = require('./Server/Routes/reportes_stockRouter.js');  // Reportes e indicadores de stock
-app.use('/reportes-stock', reportesStockRouter);
-
-const usuariosRouter = require('./Server/Routes/usuariosRouter.js');             // Gestión de usuarios
-app.use('/usuarios', usuariosRouter);
-
-// Extensiones sobre /productos (p.ej., inserción compuesta producto+stock)
-const insertProductoWithStockRouter = require('./Server/Routes/insert_producto_with_stock.js');
-app.use('/productos', insertProductoWithStockRouter);
-
-// Gestión de imágenes de productos
-const imagenesRouter = require('./Server/Routes/imagenesRouter.js');
-app.use('/imagenes', imagenesRouter);
-
-/**
- * HEALTHCHECK (para orquestadores/monitoreo)
- * - 200 { ok: true,  status: 'up' } si el proceso está vivo y DB conectada
- * - 503 { ok: false, status: 'db_not_connected' } si no hay conexión a DB
- */
-app.get('/health', (req, res) => {
-  if (!db || !db.pool || db.pool.connected === false) {
-    return res.status(503).json({ ok: false, status: 'db_not_connected' });
-  }
-  return res.json({ ok: true, status: 'up' });
-});
-
-
-/**
- * ERROR HANDLER GLOBAL 
- * Si algún router hace next(err), respondemos JSON consistente.
- * Si integraste mapSqlError en cada router, esto sirve como red de seguridad.
- */
-app.use((err, _req, res, _next) => {
-  // Intenta extraer número de error de MSSQL (cuando existe)
-  const e = err && (typeof err.number === 'number' ? err : err.originalError);
-  if (e && typeof e.number === 'number') {
-    // Puedes unificar aquí con un pequeño mapa mínimo o delegar a 500 genérico
-    return res.status(500).json({ success:false, message: err.message || 'Error en operación SQL', data:null });
-  }
-  return res.status(500).json({ success:false, message: err?.message || 'Error inesperado', data:null });
-});
-
-/**
- * ARRANQUE CONDICIONADO A LA BD
- */
-const port = parseInt(process.env.PORT, 10) || 3000;
-let httpServer = null;
+let httpServer;
 let shuttingDown = false;
+const port = process.env.PORT || 3000;
 
-async function start() {
+async function startServer() {
   try {
-    // 1) Verificación de variables críticas
-    const requiredEnv = ['DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_NAME'];
-    const missing = requiredEnv.filter(k => !process.env[k]);
-    if (missing.length) {
-      console.error('FATAL: Variables de entorno faltantes:', missing.join(', '));
-      process.exit(1);
-    }
+    console.log('Iniciando servicios, esperando base de datos...');
+    
+    // Esperar a que la base de datos se conecte exitosamente primero
+    await db.poolReady; 
 
-    // 2) Espera a que la BD conecte
-    console.log('Esperando conexión a la base de datos...');
-    await db.poolReady;
-
-    // 3) Arranca HTTP
+    // Solo iniciar HTTP si la BD está lista
     httpServer = app.listen(port, () => {
-      console.log(`Servidor corriendo en el puerto ${port}`);
+      console.log(`Servidor HTTP corriendo exitosamente en el puerto ${port}`);
     });
 
     httpServer.on('error', (err) => {
@@ -198,13 +210,13 @@ async function start() {
 }
 
 /**
- * APAGADO ORDENADO
+ * APAGADO ORDENADO (Graceful Shutdown)
  */
 async function safeShutdown(reason = 'shutdown', exitCode = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
 
-  console.log(`[${reason}] Cerrando servidor...`);
+  console.log(`\n[${reason}] Cerrando servidor...`);
 
   // 1) Cierra HTTP
   await new Promise((resolve) => {
@@ -217,24 +229,24 @@ async function safeShutdown(reason = 'shutdown', exitCode = 0) {
 
   // 2) Cierra pool SQL
   if (db && typeof db.close === 'function') {
-    try { await db.close(); } catch (e) { console.error('Error al cerrar pool SQL:', e); }
+    try { 
+      await db.close(); 
+    } catch (e) { 
+      console.error('Error al cerrar pool SQL:', e); 
+    }
   }
 
-  console.log('Apagado completo.');
+  console.log('Apagado completo. Hasta luego.');
   process.exit(exitCode);
 }
 
-// Señales y errores no controlados
+// Escuchar Señales y errores no controlados para apagado seguro
 process.on('SIGINT',  () => safeShutdown('SIGINT', 0));
 process.on('SIGTERM', () => safeShutdown('SIGTERM', 0));
-process.on('unhandledRejection', (reason) => {
-  console.error('unhandledRejection:', reason);
-  safeShutdown('unhandledRejection', 1);
-});
 process.on('uncaughtException', (err) => {
-  console.error('uncaughtException:', err);
+  console.error('Excepción no capturada (uncaughtException):', err);
   safeShutdown('uncaughtException', 1);
 });
 
-// Inicia
-start();
+// Arrancar el sistema
+startServer();
