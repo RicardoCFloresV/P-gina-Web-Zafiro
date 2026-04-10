@@ -12,7 +12,6 @@ const path       = require('path');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi    = require('swagger-ui-express');
 
-// Conector con la base de datos (pool + utilidades)
 const { db } = require('./db/dbconnector.js');
 
 // ─── Importar Enrutadores ───────────────────────────────────────────────────
@@ -27,7 +26,6 @@ const productosRouter        = require('./Server/Routes/productosRouter.js');
 const usuariosRouter         = require('./Server/Routes/usuariosRouter.js');
 const logsRouter             = require('./Server/Routes/logsRouter.js');
 
-// Middlewares de autorización
 const { requireAuth, requireAdmin, requireUser } = authModule;
 
 /**
@@ -35,22 +33,16 @@ const { requireAuth, requireAdmin, requireUser } = authModule;
  */
 const app = express();
 
-// HELMET
+// ─── HELMET (desarrollo) ────────────────────────────────────────────────────
+// CSP, COOP, COEP, CORP desactivados para desarrollo con CDNs externos
+// y acceso por IP no-localhost (ej: http://31.97.150.130:3000)
+// TODO: Reactivar en producción con directivas CSP apropiadas
 app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false,
   hsts: false,
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://code.jquery.com", "https://cdn.datatables.net", "https://cdnjs.cloudflare.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.datatables.net", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:", "https://images.unsplash.com", "https://ui-avatars.com"],
-      connectSrc: ["'self'"],
-      frameSrc: ["'self'", "https://www.google.com"],
-      upgradeInsecureRequests: null
-    },
-  },
-  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 app.use(cors());
@@ -115,10 +107,7 @@ const swaggerOptions = {
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-
-// Ruta de documentación Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 
 /**
  * ARCHIVOS ESTÁTICOS
@@ -129,10 +118,8 @@ app.use(express.static(PUBLIC_DIR, { index: 'index.html', maxAge: '1d' }));
 /**
  * RUTAS DE LA API
  */
-// Ruta pública
 app.use('/api/auth', authRouter);
 
-// Rutas protegidas (requireAuth = cualquier usuario autenticado)
 app.use('/api/unidades',        requireAuth, UnidadesRouter);
 app.use('/api/cajas',           requireAuth, cajasRouter);
 app.use('/api/categorias',      requireAuth, categoriasRouter);
@@ -140,11 +127,9 @@ app.use('/api/marcas',          requireAuth, marcasRouter);
 app.use('/api/presentaciones',  requireAuth, presentacionesRouter);
 app.use('/api/productos',       requireAuth, productosRouter);
 
-// Rutas admin-only
 app.use('/api/usuarios',        requireAdmin, usuariosRouter);
 app.use('/api/logs',            requireAdmin, logsRouter);
 
-// Fallback
 app.get('/', (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
@@ -173,9 +158,6 @@ async function startServer() {
   }
 }
 
-/**
- * APAGADO ORDENADO (Graceful Shutdown)
- */
 async function safeShutdown(reason = 'shutdown', exitCode = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
