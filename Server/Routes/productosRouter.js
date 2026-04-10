@@ -616,7 +616,7 @@ ProductosRouter.get('/detalle_caja/:producto_id', async (req, res) => {
 //  ► SP llamado      : productos_get_count_by_caja_id(@caja_id)
 //  ► Retorna          : [{ caja_id, etiqueta, cantidad_productos }]
 // ═════════════════════════════════════════════════════════════════════════════
-ProductosRouter.get('/count_by_caja/:caja_id?', async (req, res) => {
+ProductosRouter.get(['/count_by_caja', '/count_by_caja/:caja_id'], async (req, res) => {
   try {
     const cajaId = req.params.caja_id ? Number(req.params.caja_id) : null;
 
